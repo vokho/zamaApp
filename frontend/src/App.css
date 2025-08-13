@@ -1,0 +1,68 @@
+.header {
+  display: flex;
+  justify-content: stretch;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: #e9d8b4;
+  box-shadow: 0 2px 4px rgba(5, 211, 194, 0.1);
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
+  min-width: 10%;
+  justify-content: left;
+}
+
+.tabs {
+  display: flex;
+  gap: 1rem;
+  justify-content: left;
+  min-width: 40%;
+}
+
+.tab {
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  font-size: 1.2rem;
+}
+
+.tab:hover {
+  background-color: #f0f0f0;
+}
+
+.tab.active {
+  background-color: #cfcdcd;
+  -color: white;
+  font-weight: bold;
+}
+
+.address {
+  display: flex;
+  justify-content: right;
+  font-weight: bold;
+  font-size: 1.1rem;
+  min-width: 40%;
+}
+
+.wallet {
+  display: flex;
+  justify-content: right;
+  min-width: 10%;
+}
+
+.connect {
+  box-shadow: 2px 2px 2px #333;
+  min-width: 10%;
+}
+
+.body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #c5b8b8;
+  place-items: center;
+}
