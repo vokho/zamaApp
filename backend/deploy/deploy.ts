@@ -5,6 +5,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployer } = await hre.getNamedAccounts();
   const { deploy } = hre.deployments;
 
+  /*const deployedFHETokenSwap = await deploy("FHETokenSwap", {
+    from: deployer,
+    log: true,
+  });
+
+  console.log(`FHETokenSwap contract: `, deployedFHETokenSwap.address);*/
+
   /*const deployedFHECounter = await deploy("FHECounter", {
     from: deployer,
     log: true,
@@ -12,29 +19,30 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   //console.log(`FHECounter contract: `, deployedFHECounter.address);
 
-  const deployedTokenVOK = await deploy("TokenVOK", {
-    args: ["10000000000000"],
+  const deployedFHETokenVOK = await deploy("FHETokenVOK", {
+    args: ["35000000000000000"],
     from: deployer,
     log: true,
   });
 
-  console.log(`TokenVOK contract: `, deployedTokenVOK.address);
+  console.log(`FHETokenVOK contract: `, deployedFHETokenVOK.address);
 
-  const deployedTokenKHO = await deploy("TokenKHO", {
-    args: ["10000000000000"],
+  const deployedFHETokenKHO = await deploy("FHETokenKHO", {
+    args: ["2100000000000000"],
     from: deployer,
     log: true,
   });
 
-  console.log(`TokenKHO contract: `, deployedTokenKHO.address);
+  console.log(`FHETokenKHO contract: `, deployedFHETokenKHO.address);
 
+  /*
   const deployedTokenSwap = await deploy("TokenSwap", {
     args: [deployedTokenVOK.address, deployedTokenKHO.address, "2"],
     from: deployer,
     log: true,
   });
 
-  console.log(`TokenSwap contract: `, deployedTokenSwap.address);
+  console.log(`TokenSwap contract: `, deployedTokenSwap.address);*/
 };
 export default func;
 
