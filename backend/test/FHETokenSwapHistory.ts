@@ -1,6 +1,6 @@
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { ethers, fhevm } from "hardhat";
-import { FHETokenSwap, FHETokenSwap__factory } from "../types";
+import { FHETokenSwapHistory, FHETokenSwapHistory__factory } from "../types";
 import { expect } from "chai";
 import { FhevmType } from "@fhevm/hardhat-plugin";
 
@@ -33,17 +33,17 @@ type ExternalSwapData = {
 };
 
 async function deployFixture() {
-  const factory = (await ethers.getContractFactory("FHETokenSwapHistory")) as FHETokenSwap__factory;
-  const fheTokenSwapContract = (await factory.deploy()) as FHETokenSwap;
-  const fheTokenSwapContractAddress = await fheTokenSwapContract.getAddress();
+  const factory = (await ethers.getContractFactory("FHETokenSwapHistory")) as FHETokenSwapHistory__factory;
+  const fheTokenSwapHistoryContract = (await factory.deploy()) as FHETokenSwapHistory;
+  const fheTokenSwapHistoryContractAddress = await fheTokenSwapHistoryContract.getAddress();
 
-  return { fheTokenSwapContract, fheTokenSwapContractAddress };
+  return { fheTokenSwapHistoryContract, fheTokenSwapHistoryContractAddress };
 }
 
 describe("FHETokenSwapHistory", function () {
   let signers: Signers;
-  let fheTokenSwapContract: FHETokenSwap;
-  let fheTokenSwapContractAddress: string;
+  let fheTokenSwapHistoryContract: FHETokenSwapHistory;
+  let fheTokenSwapHistoryContractAddress: string;
 
   before(async function () {
     const ethSigners: HardhatEthersSigner[] = await ethers.getSigners();
@@ -55,18 +55,18 @@ describe("FHETokenSwapHistory", function () {
     if (!fhevm.isMock) {
       throw new Error(`This hardhat test suite cannot run on Sepolia Testnet`);
     }
-    ({ fheTokenSwapContract, fheTokenSwapContractAddress } = await deployFixture());
+    ({ fheTokenSwapHistoryContract, fheTokenSwapHistoryContractAddress } = await deployFixture());
   });
 
   it("get swap data array", async function () {
-    const swapWalletDataArray = await fheTokenSwapContract.getSwapDataArray(signers.alice.address);
+    const swapWalletDataArray = await fheTokenSwapHistoryContract.getSwapDataArray(signers.alice.address);
     expect(swapWalletDataArray).empty;
   });
 
   it("add swap data array", async function () {
     const time = 11250;
     const encryptedTime = await fhevm
-      .createEncryptedInput(fheTokenSwapContractAddress, signers.alice.address)
+      .createEncryptedInput(fheTokenSwapHistoryContractAddress, signers.alice.address)
       .add128(time)
       .encrypt();
 
@@ -74,25 +74,25 @@ describe("FHETokenSwapHistory", function () {
 
     const tokenFrom = signers.alice.address;
     const encryptedTokenFrom = await fhevm
-      .createEncryptedInput(fheTokenSwapContractAddress, signers.alice.address)
+      .createEncryptedInput(fheTokenSwapHistoryContractAddress, signers.alice.address)
       .addAddress(tokenFrom)
       .encrypt();
 
     const tokenTo = signers.alice.address;
     const encryptedTokenTo = await fhevm
-      .createEncryptedInput(fheTokenSwapContractAddress, signers.alice.address)
+      .createEncryptedInput(fheTokenSwapHistoryContractAddress, signers.alice.address)
       .addAddress(tokenTo)
       .encrypt();
 
     const amountFrom = 3;
     const encryptedAmountFrom = await fhevm
-      .createEncryptedInput(fheTokenSwapContractAddress, signers.alice.address)
+      .createEncryptedInput(fheTokenSwapHistoryContractAddress, signers.alice.address)
       .add128(amountFrom)
       .encrypt();
 
     const amountTo = 2;
     const encryptedAmountTo = await fhevm
-      .createEncryptedInput(fheTokenSwapContractAddress, signers.alice.address)
+      .createEncryptedInput(fheTokenSwapHistoryContractAddress, signers.alice.address)
       .add128(amountTo)
       .encrypt();
 
@@ -138,10 +138,10 @@ describe("FHETokenSwapHistory", function () {
       tokenToData: externalTokenToData,
     };
 
-    const tx = await fheTokenSwapContract.connect(signers.alice).addSwapData(externalSwapData);
+    const tx = await fheTokenSwapHistoryContract.connect(signers.alice).addSwapData(externalSwapData);
     await tx.wait();
 
-    const swapDataArray = await fheTokenSwapContract.getSwapDataArray(signers.alice.address);
+    const swapDataArray = await fheTokenSwapHistoryContract.getSwapDataArray(signers.alice.address);
     expect(swapDataArray).length(1);
 
     expect(swapDataArray[0].order).to.eq(1);
@@ -151,7 +151,7 @@ describe("FHETokenSwapHistory", function () {
     const decryptedTime = await fhevm.userDecryptEuint(
       FhevmType.euint128,
       swapDataArray[0].time,
-      fheTokenSwapContractAddress,
+      fheTokenSwapHistoryContractAddress,
       signers.alice,
     );
 
@@ -159,7 +159,7 @@ describe("FHETokenSwapHistory", function () {
 
     const decryptedTokenFrom = await fhevm.userDecryptEaddress(
       swapDataArray[0].tokenFromData.token,
-      fheTokenSwapContractAddress,
+      fheTokenSwapHistoryContractAddress,
       signers.alice,
     );
 
@@ -168,7 +168,7 @@ describe("FHETokenSwapHistory", function () {
     const decryptedAmountFrom = await fhevm.userDecryptEuint(
       FhevmType.euint128,
       swapDataArray[0].tokenFromData.amount,
-      fheTokenSwapContractAddress,
+      fheTokenSwapHistoryContractAddress,
       signers.alice,
     );
 
@@ -176,7 +176,7 @@ describe("FHETokenSwapHistory", function () {
 
     const decryptedTokenTo = await fhevm.userDecryptEaddress(
       swapDataArray[0].tokenToData.token,
-      fheTokenSwapContractAddress,
+      fheTokenSwapHistoryContractAddress,
       signers.alice,
     );
 
@@ -185,7 +185,7 @@ describe("FHETokenSwapHistory", function () {
     const decryptedAmountTo = await fhevm.userDecryptEuint(
       FhevmType.euint128,
       swapDataArray[0].tokenToData.amount,
-      fheTokenSwapContractAddress,
+      fheTokenSwapHistoryContractAddress,
       signers.alice,
     );
 

@@ -1,6 +1,18 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.app {
+  display: grid;
+  grid-template-rows: 10vh 80vh 10vh;
+  min-height: 100vh;
+}
+
 .header {
   display: flex;
-  justify-content: stretch;
+  justify-content: center;
   align-items: center;
   padding: 1rem 2rem;
   background-color: #e9d8b4;
@@ -61,8 +73,20 @@
 
 .body {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  padding: 2rem;
   align-items: center;
   background-color: #c5b8b8;
   place-items: center;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: #e9d8b4;
+  box-shadow: 0 2px 4px rgba(5, 211, 194, 0.1);
 }

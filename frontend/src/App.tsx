@@ -1,20 +1,26 @@
 import { useState } from "react";
 import { ethers } from "ethers";
+import {
+  initSDK,
+  createInstance,
+  SepoliaConfig,
+} from "@zama-fhe/relayer-sdk/bundle";
+
 import "./App.css";
-import DonutChart from "react-donut-chart";
+import SwapForm from "./SwapForm.tsx";
 
-import TokenVOKABI from "../../backend/artifacts/contracts/TokenVOK.sol/TokenVOK.json";
-import TokenKHOABI from "../../backend/artifacts/contracts/TokenKHO.sol/TokenKHO.json";
-import TokenSwapABI from "../../backend/artifacts/contracts/TokenSwap.sol/TokenSwap.json";
+import FHETokenVOKABI from "../../backend/artifacts/contracts/FHETokenVOK.sol/FHETokenVOK.json";
+import FHETokenKHOABI from "../../backend/artifacts/contracts/FHETokenKHO.sol/FHETokenKHO.json";
+import FHETokenSwapHistoryABI from "../../backend/artifacts/contracts/FHETokenSwapHistory.sol/FHETokenSwapHistory.json";
 
-const tokenVOKAddress = "0x1be6cB32FFcF1c278094e88B6B45c999AA2C7bfa";
-const tokenVOKABI = TokenVOKABI.abi;
+const fheTokenVOKAddress = "0xC130567d4436156548CfceA2d68Bc7a5957B0c08";
+const fheTokenVOKABI = FHETokenVOKABI.abi;
 
-const tokenKHOAddress = "0x7C10a5B2ec7D59EA31C0485C8B7cB73258eC0494";
-const tokenKHOABI = TokenKHOABI.abi;
+const fheTokenKHOAddress = "0xCcDB9397Cb1791b43ac2a0c3285868fa4A3ccaAE";
+const fheTokenKHOABI = FHETokenKHOABI.abi;
 
-const tokenSwapAddress = "0xde8DfC2106B6Bdf7a89252c889B7d0A4AF688b9D";
-const tokenSwapABI = TokenSwapABI.abi;
+const fheTokenSwapHistoryAddress = "0xC5629555a00588a65d3d0753558A1b964c72fE8c";
+const fheTokenSwapHistoryABI = FHETokenSwapHistoryABI.abi;
 
 const USDT_CONTRACT_ADDRESS = "0x7169D38820dfd117C3FA1f22a697dBA58d90BA06";
 const USDT_ABI = [
@@ -91,9 +97,9 @@ const App: React.FC = () => {
   };
 
   const PortfolioForm = () => (
-    <div>
+    <form className="wallet-info">
       {walletAddress && (
-        <div className="wallet-info">
+        <div>
           <p>
             <strong>Address:</strong> {walletAddress}
           </p>
@@ -111,43 +117,20 @@ const App: React.FC = () => {
           </p>
         </div>
       )}
-      <DonutChart
-        data={[
-          {
-            label: "ETH",
-            value: Number(ethBalance),
-          },
-          {
-            label: "USDC",
-            value: Number(usdtBalance),
-          },
-          {
-            label: "VOK",
-            value: Number(vokBalance),
-          },
-          {
-            label: "KHO",
-            value: Number(khoBalance),
-          },
-        ]}
-        colors={["#0088FE", "#00C49F", "#FFBB28", "#ff2882ff"]}
-      />
-      ;
-    </div>
+    </form>
   );
 
-  const SwapForm = () => (
+  /*const SwapForm = () => (
     <div>
       <h1>Swap</h1>
     </div>
-  );
+  );*/
 
   const disconnectWallet = () => {
     if (walletAddress) {
       setWalletAddress("");
     }
   };
-
   const connectWallet = async () => {
     if (!window.ethereum) {
       alert("Install MetaMask!");
@@ -155,13 +138,32 @@ const App: React.FC = () => {
     }
 
     setIsLoading(true);
+
     try {
+      // First, try to switch to Sepolia
+      await window.ethereum.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: "0xaa36a7" }],
+      });
+
+      // Wait a moment for the switch to complete
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       // 1. Connect Wallet
       const provider = new ethers.BrowserProvider(window.ethereum);
       await provider.send("eth_requestAccounts", []);
       const signer = await provider.getSigner();
       const address = await signer.getAddress();
       setWalletAddress(address);
+
+      // Check current network
+      const network = await provider.getNetwork();
+      console.log("Network:", network.name, network.chainId);
+
+      // For Sepolia testnet (chainId 11155111)
+      if (network.chainId !== 11155111n) {
+        console.error("Wrong network! Switch to Sepolia " + network.chainId);
+      }
 
       // 2. Get ETH balance
       const balanceWei = await provider.getBalance(address);
@@ -181,20 +183,110 @@ const App: React.FC = () => {
       setUsdtBalance(formattedUSDT);
 
       // 4. Get VOK balance
-      const tokenVOKContract = new ethers.Contract(
-        tokenVOKAddress,
-        tokenVOKABI,
-        provider
+      const fheTokenVOKContract = new ethers.Contract(
+        fheTokenVOKAddress,
+        fheTokenVOKABI,
+        signer
       );
 
-      const balanceVOK = await tokenVOKContract.balanceOf(address);
+      const balanceVOK = await fheTokenVOKContract.balanceOf(address);
       const formattedVOK = ethers.formatUnits(balanceVOK, 18);
       setVOKBalance(formattedVOK);
 
+      // Create FHEVM instance
+
+      await initSDK({});
+
+      //const instance = await createInstance(SepoliaConfig);
+
+      //const relayerSDK = (window as unknown as FhevmWindowType).relayerSDK;
+
+      /*
+      const instance = await createInstance({
+        ...SepoliaConfig,
+        //relayerUrl: "https://relayer.testnet.zama.cloud",
+      });
+
+      const encryptedWalletAddress = await instance
+        .createEncryptedInput(fheTokenVOKAddress, address)
+        .addAddress(address)
+        .encrypt();
+
+      const p1 = await instance.createEncryptedInput(
+        fheTokenVOKAddress,
+        address
+      );
+
+      const p2 = p1.add128(balanceVOK);
+
+      const encryptedWalletBalance = await p2.encrypt();
+
+      const tx: ethers.TransactionResponse =
+        await fheTokenVOKContract.setEncryptedBalance(
+          encryptedWalletAddress.handles[0],
+          encryptedWalletBalance.handles[0],
+          encryptedWalletBalance.inputProof
+        );
+      await tx.wait();
+
+      const newEncryptedWalletBalance =
+        await fheTokenVOKContract.getEncryptedBalance(
+          encryptedWalletAddress.handles[0]
+        );
+
+      console.log(newEncryptedWalletBalance);
+
+      ///
+
+      const ciphertextHandle = newEncryptedWalletBalance;
+
+      const keypair = instance.generateKeypair();
+      const handleContractPairs = [
+        {
+          handle: ciphertextHandle,
+          contractAddress: fheTokenVOKAddress,
+        },
+      ];
+      const startTimeStamp = Math.floor(Date.now() / 1000).toString();
+      const durationDays = "10"; // String for consistency
+      const contractAddresses = [fheTokenVOKAddress];
+
+      const eip712 = instance.createEIP712(
+        keypair.publicKey,
+        contractAddresses,
+        startTimeStamp,
+        durationDays
+      );
+
+      const signature = await signer.signTypedData(
+        eip712.domain,
+        {
+          UserDecryptRequestVerification:
+            eip712.types.UserDecryptRequestVerification,
+        },
+        eip712.message
+      );
+
+      const result = await instance.userDecrypt(
+        handleContractPairs,
+        keypair.privateKey,
+        keypair.publicKey,
+        signature.replace("0x", ""),
+        contractAddresses,
+        signer.address,
+        startTimeStamp,
+        durationDays
+      );
+
+      const decryptedValue = result[ciphertextHandle];
+
+      console.log(decryptedValue);*/
+      /////
+
       // 5. Get KHO balance
       const tokenKHOContract = new ethers.Contract(
-        tokenKHOAddress,
-        tokenKHOABI,
+        fheTokenKHOAddress,
+        fheTokenKHOABI,
         provider
       );
 
@@ -209,11 +301,11 @@ const App: React.FC = () => {
   };
 
   return (
-    <form>
+    <div className="app">
       {header()}
       <main className="body">{tabForm()}</main>
-      <footer></footer>
-    </form>
+      <footer className="footer">Footer</footer>
+    </div>
   );
 };
 
