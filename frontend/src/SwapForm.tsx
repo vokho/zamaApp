@@ -108,91 +108,115 @@ const SwapForm: React.FC = () => {
   };
 
   return (
-    <div>
-      <div className="swap-header">
-        <h2>Swap</h2>
-      </div>
-      <div className="swap-div swap-body">
-        <div>
-          <input
-            id="from"
-            value={tokenFromAmount}
-            onChange={handleTokenFromAmountChange}
-            className="input input-style"
-          />
-          <select
-            id="from"
-            value={tokenFrom}
-            onChange={handleFromTokenChange}
-            className="input-selector input-style"
-          >
-            {tokens.map((token) => (
-              <option key={token.id} value={token.id}>
-                {token.symbol}
-              </option>
-            ))}
-          </select>
+    <div className="swap-tab">
+      <div className="swap-form">
+        <div className="swap-header">
+          <h2>Swap</h2>
         </div>
-        <div>
-          <button type="button" onClick={handleSwitch} className="input-style">
-            ⇅
-          </button>
-        </div>
-        <div>
-          <input
-            id="to"
-            value={tokenToAmount}
-            onChange={handleTokenToAmountChange}
-            className="input input-style"
-          ></input>
-          <select
-            id="to"
-            value={tokenTo}
-            onChange={handleToTokenChange}
-            className="input-selector input-style"
-          >
-            {tokens.map((token) => (
-              <option key={token.id} value={token.id}>
-                {token.symbol}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <button
-            type="button"
-            onClick={handleSwap}
-            disabled={!canSwap}
-            className="swap"
-          >
-            Swap
-          </button>
-        </div>
-      </div>
-      <div className="swap-header">
-        {" "}
-        <h2>Swap History</h2>
-      </div>
-      <div className="f">
-        <table className="swap-history-table">
-          <thead className="swap-history-table-header">
-            <tr className="f">
-              {columns.map((column) => (
-                <th>{column}</th>
+        <div className="swap-div swap-body">
+          <div>
+            <input
+              id="from"
+              value={tokenFromAmount}
+              onChange={handleTokenFromAmountChange}
+              className="input input-style"
+            />
+            <select
+              id="from"
+              value={tokenFrom}
+              onChange={handleFromTokenChange}
+              className="input-selector input-style"
+            >
+              {tokens.map((token) => (
+                <option key={token.id} value={token.id}>
+                  {token.symbol}
+                </option>
               ))}
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="">
-              <td>1</td>
-              <td>19.09.2025 15:32:458</td>
-              <td>VOK</td>
-              <td>2.5</td>
-              <td>KHO</td>
-              <td>5</td>
-            </tr>
-          </tbody>
-        </table>
+            </select>
+          </div>
+          <div>
+            <button
+              type="button"
+              onClick={handleSwitch}
+              className="input-style"
+            >
+              ⇅
+            </button>
+          </div>
+          <div>
+            <input
+              id="to"
+              value={tokenToAmount}
+              onChange={handleTokenToAmountChange}
+              className="input input-style"
+            ></input>
+            <select
+              id="to"
+              value={tokenTo}
+              onChange={handleToTokenChange}
+              className="input-selector input-style"
+            >
+              {tokens.map((token) => (
+                <option key={token.id} value={token.id}>
+                  {token.symbol}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <button
+              type="button"
+              onClick={handleSwap}
+              disabled={!canSwap}
+              className="swap"
+            >
+              Swap
+            </button>
+          </div>
+        </div>
+      </div>
+      <div className="swap-history-form">
+        <div className="swap-header">
+          {" "}
+          <h2>Swap History</h2>
+        </div>
+        <div className="swap-history">
+          <table className="swap-history-table">
+            <thead className="swap-history-table-header">
+              <tr>
+                {columns.map((column) => (
+                  <th>{column}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="">
+                <td>1</td>
+                <td>19.09.2025 15:32:458</td>
+                <td>VOK</td>
+                <td>2.5</td>
+                <td>KHO</td>
+                <td>5</td>
+              </tr>
+              <tr className="">
+                <td>2</td>
+                <td>19.09.2025 15:32:458</td>
+                <td>VOK</td>
+                <td>2.5</td>
+                <td>KHO</td>
+                <td>5</td>
+              </tr>
+              <tr className="">
+                <td>3</td>
+                <td>19.09.2025 15:32:458</td>
+                <td>VOK</td>
+                <td>2.5</td>
+                <td>KHO</td>
+                <td>5</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

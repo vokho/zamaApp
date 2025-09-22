@@ -5,9 +5,9 @@ import {
   createInstance,
   SepoliaConfig,
 } from "@zama-fhe/relayer-sdk/bundle";
-
 import "./App.css";
 import SwapForm from "./SwapForm.tsx";
+import { FaXTwitter, FaInstagram, FaYoutube, FaDiscord } from "react-icons/fa6";
 
 import FHETokenVOKABI from "../../backend/artifacts/contracts/FHETokenVOK.sol/FHETokenVOK.json";
 import FHETokenKHOABI from "../../backend/artifacts/contracts/FHETokenKHO.sol/FHETokenKHO.json";
@@ -55,7 +55,7 @@ const App: React.FC = () => {
   const header = () => {
     return (
       <header className="header">
-        <div className="logo">YourLogo</div>
+        <div className="logo">FHE Swap</div>
         <nav className="tabs">
           {tabs.map((tab) => (
             <div
@@ -88,9 +88,43 @@ const App: React.FC = () => {
   const footer = () => {
     return (
       <footer className="footer">
-        <div className="">
+        <div>
           <p>@ 2025</p>
           <p>All right reserved</p>
+        </div>
+        <div>
+          <a
+            href="https://x.com/Kadrann_nl"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="x-icon-link"
+          >
+            <FaXTwitter size={24} />
+          </a>
+          <a
+            href="https://x.com/Kadrann_nl"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="x-icon-link"
+          >
+            <FaYoutube size={24} />
+          </a>
+          <a
+            href="https://x.com/Kadrann_nl"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="x-icon-link"
+          >
+            <FaDiscord size={24} />
+          </a>
+          <a
+            href="https://x.com/Kadrann_nl"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="x-icon-link"
+          >
+            <FaInstagram size={24} />
+          </a>
         </div>
       </footer>
     );
