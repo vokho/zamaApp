@@ -85,6 +85,17 @@ const App: React.FC = () => {
     );
   };
 
+  const footer = () => {
+    return (
+      <footer className="footer">
+        <div className="">
+          <p>@ 2025</p>
+          <p>All right reserved</p>
+        </div>
+      </footer>
+    );
+  };
+
   const tabForm = () => {
     switch (activeTab) {
       case "portfolio":
@@ -119,12 +130,6 @@ const App: React.FC = () => {
       )}
     </form>
   );
-
-  /*const SwapForm = () => (
-    <div>
-      <h1>Swap</h1>
-    </div>
-  );*/
 
   const disconnectWallet = () => {
     if (walletAddress) {
@@ -201,7 +206,6 @@ const App: React.FC = () => {
 
       //const relayerSDK = (window as unknown as FhevmWindowType).relayerSDK;
 
-      /*
       const instance = await createInstance({
         ...SepoliaConfig,
         //relayerUrl: "https://relayer.testnet.zama.cloud",
@@ -280,7 +284,7 @@ const App: React.FC = () => {
 
       const decryptedValue = result[ciphertextHandle];
 
-      console.log(decryptedValue);*/
+      console.log(decryptedValue);
       /////
 
       // 5. Get KHO balance
@@ -304,7 +308,7 @@ const App: React.FC = () => {
     <div className="app">
       {header()}
       <main className="body">{tabForm()}</main>
-      <footer className="footer">Footer</footer>
+      {footer()}
     </div>
   );
 };
