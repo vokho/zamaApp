@@ -5,6 +5,7 @@ import {
   createInstance,
   SepoliaConfig,
 } from "@zama-fhe/relayer-sdk/bundle";
+
 import "./App.css";
 import PortfolioForm from "./PortfolioForm.tsx";
 import SwapForm from "./SwapForm.tsx";
@@ -12,9 +13,10 @@ import { FaXTwitter, FaInstagram, FaYoutube, FaDiscord } from "react-icons/fa6";
 
 import FHETokenVOKABI from "../../backend/artifacts/contracts/FHETokenVOK.sol/FHETokenVOK.json";
 import FHETokenKHOABI from "../../backend/artifacts/contracts/FHETokenKHO.sol/FHETokenKHO.json";
+
 import FHETokenSwapHistoryABI from "../../backend/artifacts/contracts/FHETokenSwapHistory.sol/FHETokenSwapHistory.json";
 
-const fheTokenVOKAddress = "0xC130567d4436156548CfceA2d68Bc7a5957B0c08";
+const fheTokenVOKAddress = "0xFe2ADf41FeB28d54842eda33323e7C4cd82ae250";
 const fheTokenVOKABI = FHETokenVOKABI.abi;
 
 const fheTokenKHOAddress = "0xCcDB9397Cb1791b43ac2a0c3285868fa4A3ccaAE";
@@ -46,9 +48,10 @@ const App: React.FC = () => {
     setActiveTab(tabId);
   };
 
+  const [provider, setProvider] = useState<ethers.BrowserProvider | null>(null);
+  const [signer, setSigner] = useState<ethers.JsonRpcSigner | null>(null);
+
   const [walletAddress, setWalletAddress] = useState("");
-  const [ethBalance, setEthBalance] = useState("");
-  const [usdtBalance, setUsdtBalance] = useState("");
   const [vokBalance, setVOKBalance] = useState("");
   const [khoBalance, setKHOBalance] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -91,7 +94,7 @@ const App: React.FC = () => {
       <footer className="footer">
         <div>
           <p>@ 2025</p>
-          <p>All right reserved</p>
+          <p>All rights reserved</p>
         </div>
         <div>
           <a
@@ -142,7 +145,11 @@ const App: React.FC = () => {
     switch (activeTab) {
       case "portfolio":
         return (
-          <PortfolioForm vokBalance={vokBalance} khoBalance={khoBalance} />
+          <PortfolioForm
+            vokBalance={vokBalance}
+            khoBalance={khoBalance}
+            onHandleFaucet={handleFaucet}
+          />
         );
       case "swap":
         return <SwapForm />;
@@ -177,7 +184,11 @@ const App: React.FC = () => {
       // 1. Connect Wallet
       const provider = new ethers.BrowserProvider(window.ethereum);
       await provider.send("eth_requestAccounts", []);
+      setProvider(provider);
+
       const signer = await provider.getSigner();
+      setSigner(signer);
+
       const address = await signer.getAddress();
       setWalletAddress(address);
 
@@ -190,28 +201,11 @@ const App: React.FC = () => {
         console.error("Wrong network! Switch to Sepolia " + network.chainId);
       }
 
-      // 2. Get ETH balance
-      const balanceWei = await provider.getBalance(address);
-      setEthBalance(ethers.formatEther(balanceWei));
-
-      // 3. Get USDT balance
-      const usdtContract = new ethers.Contract(
-        USDT_CONTRACT_ADDRESS,
-        USDT_ABI,
-        provider
-      );
-      const balanceUSDT = await usdtContract.balanceOf(address);
-      const decimals = await usdtContract.decimals();
-
-      // Decimal converting
-      const formattedUSDT = ethers.formatUnits(balanceUSDT, decimals);
-      setUsdtBalance(formattedUSDT);
-
-      // 4. Get VOK balance
+      // 2. Get VOK balance
       const fheTokenVOKContract = new ethers.Contract(
         fheTokenVOKAddress,
         fheTokenVOKABI,
-        signer
+        provider
       );
 
       const balanceVOK = await fheTokenVOKContract.balanceOf(address);
@@ -219,16 +213,10 @@ const App: React.FC = () => {
       setVOKBalance(formattedVOK);
 
       // Create FHEVM instance
-
-      await initSDK({});
-
-      //const instance = await createInstance(SepoliaConfig);
-
-      //const relayerSDK = (window as unknown as FhevmWindowType).relayerSDK;
+      /*await initSDK({});
 
       const instance = await createInstance({
         ...SepoliaConfig,
-        //relayerUrl: "https://relayer.testnet.zama.cloud",
       });
 
       const encryptedWalletAddress = await instance
@@ -236,14 +224,11 @@ const App: React.FC = () => {
         .addAddress(address)
         .encrypt();
 
-      const p1 = await instance.createEncryptedInput(
-        fheTokenVOKAddress,
-        address
-      );
+      const encryptedWalletBalance = await instance
+        .createEncryptedInput(fheTokenVOKAddress, address)
+        .add128(balanceVOK)
+        .encrypt();
 
-      const p2 = p1.add128(balanceVOK);
-
-      const encryptedWalletBalance = await p2.encrypt();
 
       const tx: ethers.TransactionResponse =
         await fheTokenVOKContract.setEncryptedBalance(
@@ -257,10 +242,6 @@ const App: React.FC = () => {
         await fheTokenVOKContract.getEncryptedBalance(
           encryptedWalletAddress.handles[0]
         );
-
-      console.log(newEncryptedWalletBalance);
-
-      ///
 
       const ciphertextHandle = newEncryptedWalletBalance;
 
@@ -304,7 +285,7 @@ const App: React.FC = () => {
 
       const decryptedValue = result[ciphertextHandle];
 
-      console.log(decryptedValue);
+      console.log(decryptedValue);*/
       /////
 
       // 5. Get KHO balance
@@ -322,6 +303,27 @@ const App: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleFaucet = async () => {
+    const fheTokenVOKContract = new ethers.Contract(
+      fheTokenVOKAddress,
+      fheTokenVOKABI,
+      signer
+    );
+
+    const amountInTokens = "0.002";
+
+    const parsedAmount = ethers.parseUnits(amountInTokens, 18);
+
+    const tx = await fheTokenVOKContract.faucet(parsedAmount);
+    await tx.wait();
+
+    const balanceVOK = await fheTokenVOKContract.balanceOf(walletAddress);
+    const formattedVOK = ethers.formatUnits(balanceVOK, 18);
+    setVOKBalance(formattedVOK);
+
+    console.log("Done");
   };
 
   return (

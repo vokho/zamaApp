@@ -8,4 +8,9 @@ contract FHETokenKHO is ERC20, FHEERC20 {
     constructor(uint128 initialSupply) ERC20("FHETokenKHO", "KHO") {
         _mint(msg.sender, initialSupply);
     }
+
+    function faucet(uint128 amount) external {
+        require(amount <= 0.2 * 10 ** 18, "Too much");
+        _mint(msg.sender, amount);
+    }
 }

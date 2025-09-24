@@ -5,12 +5,29 @@ import "./App.css";
 interface PortfolioProps {
   vokBalance: string;
   khoBalance: string;
+  onHandleFaucet: () => void;
 }
+
+interface Token {
+  id: string;
+  symbol: string;
+  rate: number;
+}
+
+const tokens: Token[] = [
+  { id: "vok", symbol: "VOK", rate: 2.5 },
+  { id: "kho", symbol: "KHO", rate: 5 },
+];
 
 const PortfolioForm: React.FC<PortfolioProps> = ({
   vokBalance,
   khoBalance,
+  onHandleFaucet,
 }) => {
+  const handleFaucet = (event) => {
+    onHandleFaucet();
+  };
+
   return (
     <div className="space-between">
       <div className="balance-form">
@@ -20,11 +37,15 @@ const PortfolioForm: React.FC<PortfolioProps> = ({
         <div className="balance-body form-border">
           <div className="space-between">
             <strong>{"VOK: " + vokBalance}</strong>
-            <div className="opacity">$0.034</div>
+            <div className="opacity">
+              {"$" + (Number(vokBalance) * 0.02).toFixed(4)}
+            </div>
           </div>
           <div className="space-between">
             <strong>{"KHO: " + khoBalance}</strong>
-            <div className="opacity">$0.034</div>
+            <div className="opacity">
+              {"$" + (Number(khoBalance) * 0.03).toFixed(4)}
+            </div>
           </div>
           <div className="space-between">
             <strong>JEN: 0.053</strong>
@@ -46,7 +67,7 @@ const PortfolioForm: React.FC<PortfolioProps> = ({
         </div>
         <div className="faucet-body form-border">
           <div className="space-between">
-            <button type="button" className="faucet">
+            <button type="button" className="faucet" onClick={handleFaucet}>
               Get VOK token
             </button>
             <div>Daily limit: 5</div>
