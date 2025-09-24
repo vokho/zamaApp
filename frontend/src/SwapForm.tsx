@@ -108,12 +108,12 @@ const SwapForm: React.FC = () => {
   };
 
   return (
-    <div className="swap-tab">
+    <div className="space-between">
       <div className="swap-form">
-        <div className="swap-header">
+        <div className="form-header">
           <h2>Swap</h2>
         </div>
-        <div className="swap-div swap-body">
+        <div className="swap-div swap-body form-border">
           <div>
             <input
               id="from"
@@ -176,16 +176,16 @@ const SwapForm: React.FC = () => {
         </div>
       </div>
       <div className="swap-history-form">
-        <div className="swap-header">
+        <div className="form-header">
           {" "}
           <h2>Swap History</h2>
         </div>
-        <div className="swap-history">
+        <div className="swap-history-body form-border">
           <table className="swap-history-table">
             <thead className="swap-history-table-header">
               <tr>
                 {columns.map((column) => (
-                  <th>{column}</th>
+                  <th key={column}>{column}</th>
                 ))}
               </tr>
             </thead>

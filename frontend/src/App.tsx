@@ -6,6 +6,7 @@ import {
   SepoliaConfig,
 } from "@zama-fhe/relayer-sdk/bundle";
 import "./App.css";
+import PortfolioForm from "./PortfolioForm.tsx";
 import SwapForm from "./SwapForm.tsx";
 import { FaXTwitter, FaInstagram, FaYoutube, FaDiscord } from "react-icons/fa6";
 
@@ -131,39 +132,24 @@ const App: React.FC = () => {
   };
 
   const tabForm = () => {
+    if (walletAddress == "" || walletAddress == null) {
+      return (
+        <div>
+          <h3>Connect your wallet</h3>
+        </div>
+      );
+    }
     switch (activeTab) {
       case "portfolio":
-        return <PortfolioForm />;
+        return (
+          <PortfolioForm vokBalance={vokBalance} khoBalance={khoBalance} />
+        );
       case "swap":
         return <SwapForm />;
       default:
         return null;
     }
   };
-
-  const PortfolioForm = () => (
-    <form className="wallet-info">
-      {walletAddress && (
-        <div>
-          <p>
-            <strong>Address:</strong> {walletAddress}
-          </p>
-          <p>
-            <strong>ETH Balance:</strong> {ethBalance || "0"}
-          </p>
-          <p>
-            <strong>USDT Balance:</strong> {usdtBalance || "0"}
-          </p>
-          <p>
-            <strong>VOK Balance:</strong> {vokBalance || "0"}
-          </p>
-          <p>
-            <strong>KHO Balance:</strong> {khoBalance || "0"}
-          </p>
-        </div>
-      )}
-    </form>
-  );
 
   const disconnectWallet = () => {
     if (walletAddress) {
