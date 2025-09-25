@@ -5,18 +5,20 @@ import "./App.css";
 interface PortfolioProps {
   vokBalance: string;
   khoBalance: string;
-  onHandleFaucet: () => void;
+  onHandleFaucet: (tokenId) => void;
 }
 
 interface Token {
   id: string;
   symbol: string;
-  rate: number;
 }
 
 const tokens: Token[] = [
-  { id: "vok", symbol: "VOK", rate: 2.5 },
-  { id: "kho", symbol: "KHO", rate: 5 },
+  { id: "vok", symbol: "VOK" },
+  { id: "kho", symbol: "KHO" },
+  { id: "jen", symbol: "JEN" },
+  { id: "ale", symbol: "ALE" },
+  { id: "hon", symbol: "HON" },
 ];
 
 const PortfolioForm: React.FC<PortfolioProps> = ({
@@ -24,8 +26,8 @@ const PortfolioForm: React.FC<PortfolioProps> = ({
   khoBalance,
   onHandleFaucet,
 }) => {
-  const handleFaucet = (event) => {
-    onHandleFaucet();
+  const handleFaucet = (tokenId) => {
+    onHandleFaucet(tokenId);
   };
 
   return (
@@ -67,31 +69,19 @@ const PortfolioForm: React.FC<PortfolioProps> = ({
         </div>
         <div className="faucet-body form-border">
           <div className="space-between">
-            <button type="button" className="faucet" onClick={handleFaucet}>
-              Get VOK token
-            </button>
-            <div>Daily limit: 5</div>
+            {tokens.map((token) => (
+              <button
+                key={token.id}
+                type="button"
+                className="faucet"
+                onClick={() => handleFaucet(token.id)}
+              >
+                {"Get " + token.symbol + " token"}
+              </button>
+            ))}
           </div>
-          <div>
-            <button type="button" className="faucet">
-              Get KHO token
-            </button>
-          </div>
-          <div>
-            <button type="button" className="faucet">
-              Get JEN token
-            </button>
-          </div>
-          <div>
-            <button type="button" className="faucet">
-              Get ALE token
-            </button>
-          </div>
-          <div>
-            <button type="button" className="faucet">
-              Get HON token
-            </button>
-          </div>
+
+          <div>Daily limit: 5</div>
         </div>
       </div>
     </div>

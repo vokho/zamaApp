@@ -21,6 +21,8 @@ const SwapForm: React.FC = () => {
   const [tokenTo, setTokenTo] = useState(tokens[1].id);
   const [tokenFromAmount, setTokenFromAmount] = useState<number>();
   const [tokenToAmount, setTokenToAmount] = useState<number>();
+  const [tokenFromBalance, setTokenFromBalance] = useState<number>();
+  const [tokenToBalance, setTokenToBalance] = useState<number>();
   const [canSwap, setCanSwap] = useState(false);
 
   const handleFromTokenChange = (event) => {
@@ -90,6 +92,9 @@ const SwapForm: React.FC = () => {
   };
 
   useEffect(() => {
+    setTokenFromBalance(0.556421); ///!!
+    setTokenToBalance(0.5683); ///!!
+
     checkCanSwap();
   }, [tokenFrom, tokenTo, tokenFromAmount, tokenToAmount]);
 
@@ -114,7 +119,11 @@ const SwapForm: React.FC = () => {
           <h2>Swap</h2>
         </div>
         <div className="swap-div swap-body form-border">
-          <div>
+          <div className="space-between">
+            <strong className="info">From</strong>
+            <strong className="balance">{tokenFromBalance}</strong>
+          </div>
+          <div className="center">
             <input
               id="from"
               value={tokenFromAmount}
@@ -134,7 +143,12 @@ const SwapForm: React.FC = () => {
               ))}
             </select>
           </div>
-          <div>
+          <div className="center">
+            <button type="button" className="max">
+              max
+            </button>
+          </div>
+          <div className="center">
             <button
               type="button"
               onClick={handleSwitch}
@@ -143,7 +157,11 @@ const SwapForm: React.FC = () => {
               ⇅
             </button>
           </div>
-          <div>
+          <div className="space-between">
+            <strong className="info">To</strong>
+            <strong className="balance">{tokenToBalance}</strong>
+          </div>
+          <div className="center">
             <input
               id="to"
               value={tokenToAmount}
@@ -163,7 +181,7 @@ const SwapForm: React.FC = () => {
               ))}
             </select>
           </div>
-          <div>
+          <div className="center">
             <button
               type="button"
               onClick={handleSwap}

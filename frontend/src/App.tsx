@@ -19,7 +19,7 @@ import FHETokenSwapHistoryABI from "../../backend/artifacts/contracts/FHETokenSw
 const fheTokenVOKAddress = "0xFe2ADf41FeB28d54842eda33323e7C4cd82ae250";
 const fheTokenVOKABI = FHETokenVOKABI.abi;
 
-const fheTokenKHOAddress = "0xCcDB9397Cb1791b43ac2a0c3285868fa4A3ccaAE";
+const fheTokenKHOAddress = "0xe2b967a3416Ec12A37B202ab25E23F3fEBeA561f";
 const fheTokenKHOABI = FHETokenKHOABI.abi;
 
 const fheTokenSwapHistoryAddress = "0xC5629555a00588a65d3d0753558A1b964c72fE8c";
@@ -137,7 +137,7 @@ const App: React.FC = () => {
   const tabForm = () => {
     if (walletAddress == "" || walletAddress == null) {
       return (
-        <div>
+        <div className="center">
           <h3>Connect your wallet</h3>
         </div>
       );
@@ -305,10 +305,26 @@ const App: React.FC = () => {
     }
   };
 
-  const handleFaucet = async () => {
-    const fheTokenVOKContract = new ethers.Contract(
-      fheTokenVOKAddress,
-      fheTokenVOKABI,
+  const handleFaucet = async (token) => {
+    let tokenContractAddress = "";
+    let tokenContractABI;
+
+    switch (token) {
+      case "vok":
+        tokenContractAddress = fheTokenVOKAddress;
+        tokenContractABI = fheTokenVOKABI;
+        break;
+      case "kho":
+        tokenContractAddress = fheTokenKHOAddress;
+        tokenContractABI = fheTokenKHOABI;
+        break;
+      default:
+        return;
+    }
+
+    const tokenContract = new ethers.Contract(
+      tokenContractAddress,
+      tokenContractABI,
       signer
     );
 
@@ -316,14 +332,20 @@ const App: React.FC = () => {
 
     const parsedAmount = ethers.parseUnits(amountInTokens, 18);
 
-    const tx = await fheTokenVOKContract.faucet(parsedAmount);
+    const tx = await tokenContract.faucet(parsedAmount);
     await tx.wait();
 
-    const balanceVOK = await fheTokenVOKContract.balanceOf(walletAddress);
-    const formattedVOK = ethers.formatUnits(balanceVOK, 18);
-    setVOKBalance(formattedVOK);
+    const balance = await tokenContract.balanceOf(walletAddress);
+    const formatted = ethers.formatUnits(balance, 18);
 
-    console.log("Done");
+    switch (token) {
+      case "vok":
+        setVOKBalance(formatted);
+        break;
+      case "kho":
+        setKHOBalance(formatted);
+        break;
+    }
   };
 
   return (
