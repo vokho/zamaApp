@@ -1,11 +1,9 @@
-import { useState, useEffect } from "react";
-
 import "./App.css";
 
 interface PortfolioProps {
   vokBalance: string;
   khoBalance: string;
-  onHandleFaucet: (tokenId) => void;
+  onHandleFaucet: (tokenId: string) => void;
 }
 
 interface Token {
@@ -26,7 +24,7 @@ const PortfolioForm: React.FC<PortfolioProps> = ({
   khoBalance,
   onHandleFaucet,
 }) => {
-  const handleFaucet = (tokenId) => {
+  const handleFaucet = (tokenId: string) => {
     onHandleFaucet(tokenId);
   };
 

@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { ethers } from "ethers";
 
 import "./App.css";
 
@@ -13,11 +12,21 @@ interface Token {
 interface SwapProps {
   vokBalance: string;
   khoBalance: string;
+  onHandleSwap: (
+    tokenFrom: string,
+    tokenTo: string,
+    tokenFromAmount: number | undefined,
+    tokenToAmount: number | undefined
+  ) => void;
 }
 
 const columns = ["№", "Date", "From", "From Amount", "To", "To Amount"];
 
-const SwapForm: React.FC<SwapProps> = ({ vokBalance, khoBalance }) => {
+const SwapForm: React.FC<SwapProps> = ({
+  vokBalance,
+  khoBalance,
+  onHandleSwap,
+}) => {
   const tokens: Token[] = [
     { id: "vok", symbol: "VOK", rate: 2.5, balance: vokBalance },
     { id: "kho", symbol: "KHO", rate: 5, balance: khoBalance },
@@ -104,13 +113,9 @@ const SwapForm: React.FC<SwapProps> = ({ vokBalance, khoBalance }) => {
     setTokenToBalance(oldTokenFromBalance);
   };
 
-  const handleSwap = async () => {
-    //console.log("Swap");
+  const handleSwap = () => {
+    onHandleSwap(tokenFrom, tokenTo, tokenFromAmount, tokenToAmount);
   };
-
-  useEffect(() => {
-    checkCanSwap();
-  }, [tokenFrom, tokenTo, tokenFromAmount, tokenToAmount]);
 
   const checkCanSwap = () => {
     if (
@@ -125,6 +130,10 @@ const SwapForm: React.FC<SwapProps> = ({ vokBalance, khoBalance }) => {
       setCanSwap(true);
     }
   };
+
+  useEffect(() => {
+    checkCanSwap();
+  }, [tokenFrom, tokenTo, tokenFromAmount, tokenToAmount]);
 
   return (
     <div className="space-between">

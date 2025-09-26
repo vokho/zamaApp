@@ -16,20 +16,25 @@ import FHETokenKHOABI from "../../backend/artifacts/contracts/FHETokenKHO.sol/FH
 
 import FHETokenSwapHistoryABI from "../../backend/artifacts/contracts/FHETokenSwapHistory.sol/FHETokenSwapHistory.json";
 
-const fheTokenVOKAddress = "0xFe2ADf41FeB28d54842eda33323e7C4cd82ae250";
+import TokenSwapABI from "../../backend/artifacts/contracts/TokenSwap.sol/TokenSwap.json";
+
+const fheTokenVOKAddress = "0xf2ae56F330F2837E7f3B62188848123fD6972b12";
 const fheTokenVOKABI = FHETokenVOKABI.abi;
 
-const fheTokenKHOAddress = "0xe2b967a3416Ec12A37B202ab25E23F3fEBeA561f";
+const fheTokenKHOAddress = "0x3923b8e9Aa15c2b74F9139c7fB50a6EeFAb653ba";
 const fheTokenKHOABI = FHETokenKHOABI.abi;
 
 const fheTokenSwapHistoryAddress = "0xC5629555a00588a65d3d0753558A1b964c72fE8c";
 const fheTokenSwapHistoryABI = FHETokenSwapHistoryABI.abi;
 
-const USDT_CONTRACT_ADDRESS = "0x7169D38820dfd117C3FA1f22a697dBA58d90BA06";
+const tokenSwapAddress = "0xD996B7565990eD0C928341F860E007bf4b8A8878";
+const tokenSwapABI = TokenSwapABI.abi;
+
+/*const USDT_CONTRACT_ADDRESS = "0x7169D38820dfd117C3FA1f22a697dBA58d90BA06";
 const USDT_ABI = [
   "function balanceOf(address owner) view returns (uint256)",
   "function decimals() view returns (uint8)",
-];
+];*/
 
 type Tab = {
   id: string;
@@ -43,10 +48,6 @@ const tabs: Tab[] = [
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("portfolio");
-
-  const handleTabClick = (tabId: string): void => {
-    setActiveTab(tabId);
-  };
 
   const [provider, setProvider] = useState<ethers.BrowserProvider | null>(null);
   const [signer, setSigner] = useState<ethers.JsonRpcSigner | null>(null);
@@ -152,10 +153,20 @@ const App: React.FC = () => {
           />
         );
       case "swap":
-        return <SwapForm vokBalance={vokBalance} khoBalance={khoBalance} />;
+        return (
+          <SwapForm
+            vokBalance={vokBalance}
+            khoBalance={khoBalance}
+            onHandleSwap={handleSwap}
+          />
+        );
       default:
         return null;
     }
+  };
+
+  const handleTabClick = (tabId: string): void => {
+    setActiveTab(tabId);
   };
 
   const disconnectWallet = () => {
@@ -213,7 +224,7 @@ const App: React.FC = () => {
       setVOKBalance(formattedVOK);
 
       // Create FHEVM instance
-      await initSDK({});
+      /*await initSDK({});
 
       const instance = await createInstance({
         ...SepoliaConfig,
@@ -285,7 +296,7 @@ const App: React.FC = () => {
 
       const decryptedValue = result[ciphertextHandle];
 
-      console.log(decryptedValue);
+      console.log(decryptedValue);*/
       /////
 
       // 5. Get KHO balance
@@ -297,6 +308,7 @@ const App: React.FC = () => {
 
       const balanceKHO = await tokenKHOContract.balanceOf(address);
       const formattedKHO = ethers.formatUnits(balanceKHO, 18);
+
       setKHOBalance(formattedKHO);
     } catch (error) {
       console.error("Error:", error);
@@ -305,22 +317,9 @@ const App: React.FC = () => {
     }
   };
 
-  const handleFaucet = async (token) => {
-    let tokenContractAddress = "";
-    let tokenContractABI;
-
-    switch (token) {
-      case "vok":
-        tokenContractAddress = fheTokenVOKAddress;
-        tokenContractABI = fheTokenVOKABI;
-        break;
-      case "kho":
-        tokenContractAddress = fheTokenKHOAddress;
-        tokenContractABI = fheTokenKHOABI;
-        break;
-      default:
-        return;
-    }
+  const handleFaucet = async (tokenId: string) => {
+    const { tokenContractAddress, tokenContractABI } =
+      getTokenContractData(tokenId);
 
     const tokenContract = new ethers.Contract(
       tokenContractAddress,
@@ -328,7 +327,7 @@ const App: React.FC = () => {
       signer
     );
 
-    const amountInTokens = "0.002";
+    const amountInTokens = "0.2";
 
     const parsedAmount = ethers.parseUnits(amountInTokens, 18);
 
@@ -338,7 +337,7 @@ const App: React.FC = () => {
     const balance = await tokenContract.balanceOf(walletAddress);
     const formatted = ethers.formatUnits(balance, 18);
 
-    switch (token) {
+    switch (tokenId) {
       case "vok":
         setVOKBalance(formatted);
         break;
@@ -346,6 +345,103 @@ const App: React.FC = () => {
         setKHOBalance(formatted);
         break;
     }
+  };
+
+  const handleSwap = async (
+    tokenFrom: string,
+    tokenTo: string,
+    tokenFromAmount: number | undefined,
+    tokenToAmount: number | undefined
+  ) => {
+    const tokenSwapContract = new ethers.Contract(
+      tokenSwapAddress,
+      tokenSwapABI,
+      signer
+    );
+
+    const fheTokenVOKContract = new ethers.Contract(
+      fheTokenVOKAddress,
+      fheTokenVOKABI,
+      signer
+    );
+
+    const fheTokenKHOContract = new ethers.Contract(
+      fheTokenKHOAddress,
+      fheTokenKHOABI,
+      signer
+    );
+
+    if (tokenFromAmount == null || tokenToAmount == null) {
+      return;
+    }
+
+    const parsedTokenFromAmount = ethers.parseUnits(
+      tokenFromAmount.toString(),
+      18
+    );
+    const parsedTokenToAmount = ethers.parseUnits(tokenToAmount.toString(), 18);
+
+    const allowanceFrom: bigint = await fheTokenVOKContract.allowance(
+      walletAddress,
+      tokenSwapAddress
+    );
+
+    if (allowanceFrom < parsedTokenFromAmount) {
+      const approveTx = await fheTokenVOKContract.approve(
+        tokenSwapAddress,
+        parsedTokenFromAmount.toString()
+      );
+      await approveTx.wait();
+    }
+
+    const allowanceTo: bigint = await fheTokenKHOContract.allowance(
+      tokenSwapAddress,
+      walletAddress
+    );
+
+    if (allowanceTo < parsedTokenToAmount) {
+      const approveTx = await fheTokenKHOContract.approve(
+        walletAddress,
+        parsedTokenToAmount
+      );
+      await approveTx.wait();
+    }
+
+    const tx = await tokenSwapContract.swap(
+      walletAddress,
+      fheTokenVOKAddress,
+      fheTokenKHOAddress,
+      parsedTokenFromAmount,
+      parsedTokenToAmount
+    );
+
+    await tx.wait();
+
+    const balanceVOK = await fheTokenVOKContract.balanceOf(walletAddress);
+    const formattedVOK = ethers.formatUnits(balanceVOK, 18);
+    setVOKBalance(formattedVOK);
+
+    const balanceKHO = await fheTokenKHOContract.balanceOf(walletAddress);
+    const formattedKHO = ethers.formatUnits(balanceKHO, 18);
+    setKHOBalance(formattedKHO);
+  };
+
+  const getTokenContractData = (tokenId: string) => {
+    let tokenContractAddress = "";
+    let tokenContractABI: any[] = [];
+
+    switch (tokenId) {
+      case "vok":
+        tokenContractAddress = fheTokenVOKAddress;
+        tokenContractABI = fheTokenVOKABI;
+        break;
+      case "kho":
+        tokenContractAddress = fheTokenKHOAddress;
+        tokenContractABI = fheTokenKHOABI;
+        break;
+    }
+
+    return { tokenContractAddress, tokenContractABI };
   };
 
   return (

@@ -6,7 +6,7 @@ import "../contracts/FHEERC20.sol";
 
 contract FHETokenVOK is ERC20, FHEERC20 {
     constructor(uint128 initialSupply) ERC20("FHETokenVOK", "VOK") {
-        _mint(msg.sender, initialSupply);
+        _mint(address(this), initialSupply);
     }
 
     function faucet(uint128 amount) external {
