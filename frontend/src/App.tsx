@@ -152,7 +152,7 @@ const App: React.FC = () => {
           />
         );
       case "swap":
-        return <SwapForm />;
+        return <SwapForm vokBalance={vokBalance} khoBalance={khoBalance} />;
       default:
         return null;
     }
@@ -213,7 +213,7 @@ const App: React.FC = () => {
       setVOKBalance(formattedVOK);
 
       // Create FHEVM instance
-      /*await initSDK({});
+      await initSDK({});
 
       const instance = await createInstance({
         ...SepoliaConfig,
@@ -285,7 +285,7 @@ const App: React.FC = () => {
 
       const decryptedValue = result[ciphertextHandle];
 
-      console.log(decryptedValue);*/
+      console.log(decryptedValue);
       /////
 
       // 5. Get KHO balance

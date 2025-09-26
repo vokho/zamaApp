@@ -7,32 +7,42 @@ interface Token {
   id: string;
   symbol: string;
   rate: number;
+  balance: string;
+}
+
+interface SwapProps {
+  vokBalance: string;
+  khoBalance: string;
 }
 
 const columns = ["№", "Date", "From", "From Amount", "To", "To Amount"];
 
-const SwapForm: React.FC = () => {
+const SwapForm: React.FC<SwapProps> = ({ vokBalance, khoBalance }) => {
   const tokens: Token[] = [
-    { id: "vok", symbol: "VOK", rate: 2.5 },
-    { id: "kho", symbol: "KHO", rate: 5 },
+    { id: "vok", symbol: "VOK", rate: 2.5, balance: vokBalance },
+    { id: "kho", symbol: "KHO", rate: 5, balance: khoBalance },
   ];
 
   const [tokenFrom, setTokenFrom] = useState(tokens[0].id);
   const [tokenTo, setTokenTo] = useState(tokens[1].id);
   const [tokenFromAmount, setTokenFromAmount] = useState<number>();
   const [tokenToAmount, setTokenToAmount] = useState<number>();
-  const [tokenFromBalance, setTokenFromBalance] = useState<number>();
-  const [tokenToBalance, setTokenToBalance] = useState<number>();
+  const [tokenFromBalance, setTokenFromBalance] = useState(tokens[0].balance);
+  const [tokenToBalance, setTokenToBalance] = useState(tokens[1].balance);
+
   const [canSwap, setCanSwap] = useState(false);
 
   const handleFromTokenChange = (event) => {
     setTokenFrom(event.target.value);
 
+    const newTokenFrom = tokens.find((item) => item.id === event.target.value);
+    const newTokenTo = tokens.find((item) => item.id === tokenTo);
+
+    setTokenFromBalance(newTokenFrom?.balance || "");
+
     if (tokenToAmount != 0 && tokenToAmount != null) {
-      const tokenFromRate = tokens.find(
-        (item) => item.id === event.target.value
-      )?.rate;
-      const tokenToRate = tokens.find((item) => item.id === tokenTo)?.rate;
+      const tokenFromRate = newTokenFrom?.rate;
+      const tokenToRate = newTokenTo?.rate;
 
       if (tokenFromRate != null && tokenToRate != null) {
         setTokenFromAmount((tokenFromRate * tokenToAmount) / tokenToRate);
@@ -43,11 +53,14 @@ const SwapForm: React.FC = () => {
   const handleToTokenChange = (event) => {
     setTokenTo(event.target.value);
 
+    const newTokenFrom = tokens.find((item) => item.id === tokenFrom);
+    const newTokenTo = tokens.find((item) => item.id === event.target.value);
+
+    setTokenToBalance(newTokenTo?.balance || "");
+
     if (tokenFromAmount != 0 && tokenFromAmount != null) {
-      const tokenFromRate = tokens.find((item) => item.id === tokenFrom)?.rate;
-      const tokenToRate = tokens.find(
-        (item) => item.id === event.target.value
-      )?.rate;
+      const tokenFromRate = newTokenFrom?.rate;
+      const tokenToRate = newTokenTo?.rate;
 
       if (tokenFromRate != null && tokenToRate != null) {
         setTokenToAmount((tokenToRate * tokenFromAmount) / tokenFromRate);
@@ -85,6 +98,10 @@ const SwapForm: React.FC = () => {
     const oldTokenFromAmount = tokenFromAmount;
     setTokenFromAmount(tokenToAmount);
     setTokenToAmount(oldTokenFromAmount);
+
+    const oldTokenFromBalance = tokenFromBalance;
+    setTokenFromBalance(tokenToBalance);
+    setTokenToBalance(oldTokenFromBalance);
   };
 
   const handleSwap = async () => {
@@ -92,9 +109,6 @@ const SwapForm: React.FC = () => {
   };
 
   useEffect(() => {
-    setTokenFromBalance(0.556421); ///!!
-    setTokenToBalance(0.5683); ///!!
-
     checkCanSwap();
   }, [tokenFrom, tokenTo, tokenFromAmount, tokenToAmount]);
 
