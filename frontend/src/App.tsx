@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ethers } from "ethers";
+import { ethers, type JsonFragment } from "ethers";
 import {
   initSDK,
   createInstance,
@@ -46,6 +46,15 @@ const tabs: Tab[] = [
   { id: "swap", label: "Swap" },
 ];
 
+export interface Token {
+  id: string;
+  symbol: string;
+  rate: number;
+  balance: string;
+  tokenAddress: string;
+  tokenContractABI: JsonFragment[];
+}
+
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("portfolio");
 
@@ -56,6 +65,49 @@ const App: React.FC = () => {
   const [vokBalance, setVOKBalance] = useState("");
   const [khoBalance, setKHOBalance] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const tokens: Token[] = [
+    {
+      id: "vok",
+      symbol: "VOK",
+      rate: 2.5,
+      balance: vokBalance,
+      tokenAddress: "0xf2ae56F330F2837E7f3B62188848123fD6972b12",
+      tokenContractABI: FHETokenVOKABI.abi,
+    },
+    {
+      id: "kho",
+      symbol: "KHO",
+      rate: 5,
+      balance: khoBalance,
+      tokenAddress: "0x3923b8e9Aa15c2b74F9139c7fB50a6EeFAb653ba",
+      tokenContractABI: FHETokenKHOABI.abi,
+    },
+    {
+      id: "jen",
+      symbol: "JEN",
+      rate: 0,
+      balance: "0.053",
+      tokenAddress: "",
+      tokenContractABI: [],
+    },
+    {
+      id: "ale",
+      symbol: "ALE",
+      rate: 0,
+      balance: "0.19",
+      tokenAddress: "",
+      tokenContractABI: [],
+    },
+    {
+      id: "hon",
+      symbol: "HON",
+      rate: 0,
+      balance: "0.0004",
+      tokenAddress: "",
+      tokenContractABI: [],
+    },
+  ];
 
   const header = () => {
     return (
@@ -145,16 +197,11 @@ const App: React.FC = () => {
     }
     switch (activeTab) {
       case "portfolio":
-        return (
-          <PortfolioForm
-            vokBalance={vokBalance}
-            khoBalance={khoBalance}
-            onHandleFaucet={handleFaucet}
-          />
-        );
+        return <PortfolioForm tokens={tokens} onHandleFaucet={handleFaucet} />;
       case "swap":
         return (
           <SwapForm
+            tokens={tokens}
             vokBalance={vokBalance}
             khoBalance={khoBalance}
             onHandleSwap={handleSwap}
@@ -317,13 +364,10 @@ const App: React.FC = () => {
     }
   };
 
-  const handleFaucet = async (tokenId: string) => {
-    const { tokenContractAddress, tokenContractABI } =
-      getTokenContractData(tokenId);
-
+  const handleFaucet = async (token: Token) => {
     const tokenContract = new ethers.Contract(
-      tokenContractAddress,
-      tokenContractABI,
+      token.tokenAddress,
+      token.tokenContractABI,
       signer
     );
 
@@ -337,7 +381,7 @@ const App: React.FC = () => {
     const balance = await tokenContract.balanceOf(walletAddress);
     const formatted = ethers.formatUnits(balance, 18);
 
-    switch (tokenId) {
+    switch (token.id) {
       case "vok":
         setVOKBalance(formatted);
         break;
@@ -426,6 +470,7 @@ const App: React.FC = () => {
     setKHOBalance(formattedKHO);
   };
 
+  //change
   const getTokenContractData = (tokenId: string) => {
     let tokenContractAddress = "";
     let tokenContractABI: any[] = [];
