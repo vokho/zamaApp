@@ -209,7 +209,7 @@ const SwapForm: React.FC<SwapProps> = ({ tokens, onHandleSwap }) => {
     <div className="space-between">
       <div className="swap-form">
         <div className="form-header">
-          <h2>Swap</h2>
+          <h2>FHE Swap</h2>
         </div>
         <div className="swap-div swap-body form-border">
           <div className="space-between">
@@ -289,7 +289,7 @@ const SwapForm: React.FC<SwapProps> = ({ tokens, onHandleSwap }) => {
       <div className="swap-history-form">
         <div className="form-header">
           {" "}
-          <h2>Swap History</h2>
+          <h2>FHE Swap History</h2>
         </div>
         <div className="swap-history-body form-border">
           <table className="swap-history-table">

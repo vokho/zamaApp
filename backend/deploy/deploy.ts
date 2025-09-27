@@ -12,14 +12,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log(`TokenSwap contract: `, deployedTokenSwap.address);
 
-  /*const deployedFHETokenSwapHistory = await deploy("FHETokenSwapHistory", {
+  const deployedFHETokenSwapHistory = await deploy("FHETokenSwapHistory", {
     from: deployer,
     log: true,
   });
 
-  console.log(`FHETokenSwapHistory contract: `, deployedFHETokenSwapHistory.address);*/
+  console.log(`FHETokenSwapHistory contract: `, deployedFHETokenSwapHistory.address);
 
-  /*const deployedFHETokenVOK = await deploy("FHETokenVOK", {
+  const deployedFHETokenVOK = await deploy("FHETokenVOK", {
     args: ["35000000000000000"],
     from: deployer,
     log: true,
@@ -33,9 +33,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     log: true,
   });
 
-  console.log(`FHETokenKHO contract: `, deployedFHETokenKHO.address);*/
+  console.log(`FHETokenKHO contract: `, deployedFHETokenKHO.address);
 };
 export default func;
-
-/*func.id = "deploy_fheCounter"; // id required to prevent reexecution
-func.tags = ["FHECounter"];*/
