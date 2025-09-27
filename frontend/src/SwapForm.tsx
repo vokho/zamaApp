@@ -13,6 +13,42 @@ interface SwapProps {
   ) => void;
 }
 
+interface SwapHistory {
+  id: string;
+  date: string;
+  from: string;
+  fromAmount: string;
+  to: string;
+  toAmount: string;
+}
+
+const defaultSwapHistoryList: SwapHistory[] = [
+  {
+    id: "1",
+    date: "19.09.2025 15:32:08:458",
+    from: "VOK",
+    fromAmount: "2.5",
+    to: "KHO",
+    toAmount: "5",
+  },
+  {
+    id: "2",
+    date: "20.09.2025 19:10:39:036",
+    from: "JEN",
+    fromAmount: "0.25",
+    to: "HON",
+    toAmount: "0.05",
+  },
+  {
+    id: "3",
+    date: "20.09.2025 23:40:25:652",
+    from: "ALE",
+    fromAmount: "0.008",
+    to: "VOK",
+    toAmount: "0.24562",
+  },
+];
+
 const columns = ["№", "Date", "From", "From Amount", "To", "To Amount"];
 
 const SwapForm: React.FC<SwapProps> = ({ tokens, onHandleSwap }) => {
@@ -20,6 +56,10 @@ const SwapForm: React.FC<SwapProps> = ({ tokens, onHandleSwap }) => {
   const [tokenTo, setTokenTo] = useState(tokens[1]);
   const [tokenFromAmount, setTokenFromAmount] = useState<number>();
   const [tokenToAmount, setTokenToAmount] = useState<number>();
+
+  const [swapHistoryList, setSwapHistoryList] = useState<SwapHistory[]>(
+    defaultSwapHistoryList
+  );
 
   const [canSwap, setCanSwap] = useState(false);
 
@@ -89,39 +129,81 @@ const SwapForm: React.FC<SwapProps> = ({ tokens, onHandleSwap }) => {
     setTokenToAmount(oldTokenFromAmount);
   };
 
-  const handleSwap = () => {
-    onHandleSwap(tokenFrom, tokenTo, tokenFromAmount, tokenToAmount);
-  };
-
-  const checkCanSwap = () => {
-    if (
-      tokenFrom.id == tokenTo.id ||
-      tokenFromAmount == null ||
-      tokenToAmount == null ||
-      tokenFromAmount == 0 ||
-      tokenToAmount == 0
-    ) {
-      setCanSwap(false);
-    } else {
-      setCanSwap(true);
+  const handleSwap = async () => {
+    if (tokenFromAmount == null || tokenToAmount == null) {
+      return;
     }
+    await onHandleSwap(tokenFrom, tokenTo, tokenFromAmount, tokenToAmount);
+
+    const dateTime = new Date();
+    const formatter =
+      dateTime.getDate() +
+      "." +
+      (dateTime.getMonth() + 1 < 10
+        ? "0" + (dateTime.getMonth() + 1)
+        : dateTime.getMonth() + 1) +
+      "." +
+      dateTime.getFullYear() +
+      " " +
+      (dateTime.getHours() < 10
+        ? "0" + dateTime.getHours()
+        : dateTime.getHours()) +
+      ":" +
+      (dateTime.getMinutes() < 10
+        ? "0" + dateTime.getMinutes()
+        : dateTime.getMinutes()) +
+      ":" +
+      (dateTime.getSeconds() < 10
+        ? "0" + dateTime.getSeconds()
+        : dateTime.getSeconds()) +
+      ":" +
+      dateTime.getMilliseconds();
+
+    const newSwapHistory: SwapHistory = {
+      id: (swapHistoryList.length + 1).toString(),
+      date: formatter,
+      from: tokenFrom.symbol,
+      fromAmount: tokenFromAmount.toString(),
+      to: tokenTo.symbol,
+      toAmount: tokenToAmount?.toString(),
+    };
+
+    setSwapHistoryList([...swapHistoryList, newSwapHistory]);
   };
 
   useEffect(() => {
+    const checkCanSwap = () => {
+      if (
+        tokenFrom.id == tokenTo.id ||
+        tokenFromAmount == null ||
+        tokenToAmount == null ||
+        tokenFromAmount == 0 ||
+        tokenToAmount == 0
+      ) {
+        setCanSwap(false);
+      } else {
+        setCanSwap(true);
+      }
+    };
+
     checkCanSwap();
   }, [tokenFrom, tokenTo, tokenFromAmount, tokenToAmount]);
 
   useEffect(() => {
-    const newTokenFrom = tokens.find((token) => token.id === tokenFrom.id);
-    if (newTokenFrom != null) {
-      setTokenFrom(newTokenFrom);
-    }
+    const updateTokens = () => {
+      const newTokenFrom = tokens.find((token) => token.id === tokenFrom.id);
+      if (newTokenFrom != null) {
+        setTokenFrom(newTokenFrom);
+      }
 
-    const newTokenTo = tokens.find((token) => token.id === tokenTo.id);
-    if (newTokenTo != null) {
-      setTokenTo(newTokenTo);
-    }
-  }, [tokens]);
+      const newTokenTo = tokens.find((token) => token.id === tokenTo.id);
+      if (newTokenTo != null) {
+        setTokenTo(newTokenTo);
+      }
+    };
+
+    updateTokens();
+  }, [tokenFrom.id, tokenTo.id, tokens]);
 
   return (
     <div className="space-between">
@@ -219,30 +301,16 @@ const SwapForm: React.FC<SwapProps> = ({ tokens, onHandleSwap }) => {
               </tr>
             </thead>
             <tbody>
-              <tr className="">
-                <td>1</td>
-                <td>19.09.2025 15:32:458</td>
-                <td>VOK</td>
-                <td>2.5</td>
-                <td>KHO</td>
-                <td>5</td>
-              </tr>
-              <tr className="">
-                <td>2</td>
-                <td>19.09.2025 15:32:458</td>
-                <td>VOK</td>
-                <td>2.5</td>
-                <td>KHO</td>
-                <td>5</td>
-              </tr>
-              <tr className="">
-                <td>3</td>
-                <td>19.09.2025 15:32:458</td>
-                <td>VOK</td>
-                <td>2.5</td>
-                <td>KHO</td>
-                <td>5</td>
-              </tr>
+              {swapHistoryList.map((swapHistory) => (
+                <tr key={swapHistory.id}>
+                  <td>{swapHistory.id}</td>
+                  <td>{swapHistory.date}</td>
+                  <td>{swapHistory.from}</td>
+                  <td>{swapHistory.fromAmount}</td>
+                  <td>{swapHistory.to}</td>
+                  <td>{swapHistory.toAmount}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
