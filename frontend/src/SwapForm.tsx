@@ -1,20 +1,13 @@
 import { useState, useEffect } from "react";
+import { type Token } from "./App";
 
 import "./App.css";
 
-interface Token {
-  id: string;
-  symbol: string;
-  rate: number;
-  balance: string;
-}
-
 interface SwapProps {
-  vokBalance: string;
-  khoBalance: string;
+  tokens: Token[];
   onHandleSwap: (
-    tokenFrom: string,
-    tokenTo: string,
+    tokenFrom: Token,
+    tokenTo: Token,
     tokenFromAmount: number | undefined,
     tokenToAmount: number | undefined
   ) => void;
@@ -22,36 +15,25 @@ interface SwapProps {
 
 const columns = ["№", "Date", "From", "From Amount", "To", "To Amount"];
 
-const SwapForm: React.FC<SwapProps> = ({
-  vokBalance,
-  khoBalance,
-  onHandleSwap,
-}) => {
-  const tokens: Token[] = [
-    { id: "vok", symbol: "VOK", rate: 2.5, balance: vokBalance },
-    { id: "kho", symbol: "KHO", rate: 5, balance: khoBalance },
-  ];
-
-  const [tokenFrom, setTokenFrom] = useState(tokens[0].id);
-  const [tokenTo, setTokenTo] = useState(tokens[1].id);
+const SwapForm: React.FC<SwapProps> = ({ tokens, onHandleSwap }) => {
+  const [tokenFrom, setTokenFrom] = useState(tokens[0]);
+  const [tokenTo, setTokenTo] = useState(tokens[1]);
   const [tokenFromAmount, setTokenFromAmount] = useState<number>();
   const [tokenToAmount, setTokenToAmount] = useState<number>();
-  const [tokenFromBalance, setTokenFromBalance] = useState(tokens[0].balance);
-  const [tokenToBalance, setTokenToBalance] = useState(tokens[1].balance);
 
   const [canSwap, setCanSwap] = useState(false);
 
   const handleFromTokenChange = (event) => {
-    setTokenFrom(event.target.value);
-
-    const newTokenFrom = tokens.find((item) => item.id === event.target.value);
-    const newTokenTo = tokens.find((item) => item.id === tokenTo);
-
-    setTokenFromBalance(newTokenFrom?.balance || "");
+    const newTokenFrom = tokens.find(
+      (token) => token.id === event.target.value
+    );
+    if (newTokenFrom != null) {
+      setTokenFrom(newTokenFrom);
+    }
 
     if (tokenToAmount != 0 && tokenToAmount != null) {
       const tokenFromRate = newTokenFrom?.rate;
-      const tokenToRate = newTokenTo?.rate;
+      const tokenToRate = tokenTo?.rate;
 
       if (tokenFromRate != null && tokenToRate != null) {
         setTokenFromAmount((tokenFromRate * tokenToAmount) / tokenToRate);
@@ -60,15 +42,13 @@ const SwapForm: React.FC<SwapProps> = ({
   };
 
   const handleToTokenChange = (event) => {
-    setTokenTo(event.target.value);
-
-    const newTokenFrom = tokens.find((item) => item.id === tokenFrom);
-    const newTokenTo = tokens.find((item) => item.id === event.target.value);
-
-    setTokenToBalance(newTokenTo?.balance || "");
+    const newTokenTo = tokens.find((token) => token.id === event.target.value);
+    if (newTokenTo != null) {
+      setTokenFrom(newTokenTo);
+    }
 
     if (tokenFromAmount != 0 && tokenFromAmount != null) {
-      const tokenFromRate = newTokenFrom?.rate;
+      const tokenFromRate = tokenFrom?.rate;
       const tokenToRate = newTokenTo?.rate;
 
       if (tokenFromRate != null && tokenToRate != null) {
@@ -80,8 +60,8 @@ const SwapForm: React.FC<SwapProps> = ({
   const handleTokenFromAmountChange = (event) => {
     setTokenFromAmount(event.target.value);
 
-    const tokenFromRate = tokens.find((item) => item.id === tokenFrom)?.rate;
-    const tokenToRate = tokens.find((item) => item.id === tokenTo)?.rate;
+    const tokenFromRate = tokenFrom?.rate;
+    const tokenToRate = tokenTo?.rate;
 
     if (tokenFromRate != null && tokenToRate != null) {
       setTokenToAmount((tokenToRate * event.target.value) / tokenFromRate);
@@ -91,8 +71,8 @@ const SwapForm: React.FC<SwapProps> = ({
   const handleTokenToAmountChange = (event) => {
     setTokenToAmount(event.target.value);
 
-    const tokenFromRate = tokens.find((item) => item.id === tokenFrom)?.rate;
-    const tokenToRate = tokens.find((item) => item.id === tokenTo)?.rate;
+    const tokenFromRate = tokenFrom?.rate;
+    const tokenToRate = tokenTo?.rate;
 
     if (tokenFromRate != null && tokenToRate != null) {
       setTokenFromAmount((tokenFromRate * event.target.value) / tokenToRate);
@@ -107,10 +87,6 @@ const SwapForm: React.FC<SwapProps> = ({
     const oldTokenFromAmount = tokenFromAmount;
     setTokenFromAmount(tokenToAmount);
     setTokenToAmount(oldTokenFromAmount);
-
-    const oldTokenFromBalance = tokenFromBalance;
-    setTokenFromBalance(tokenToBalance);
-    setTokenToBalance(oldTokenFromBalance);
   };
 
   const handleSwap = () => {
@@ -119,7 +95,7 @@ const SwapForm: React.FC<SwapProps> = ({
 
   const checkCanSwap = () => {
     if (
-      tokenFrom == tokenTo ||
+      tokenFrom.id == tokenTo.id ||
       tokenFromAmount == null ||
       tokenToAmount == null ||
       tokenFromAmount == 0 ||
@@ -135,6 +111,18 @@ const SwapForm: React.FC<SwapProps> = ({
     checkCanSwap();
   }, [tokenFrom, tokenTo, tokenFromAmount, tokenToAmount]);
 
+  useEffect(() => {
+    const newTokenFrom = tokens.find((token) => token.id === tokenFrom.id);
+    if (newTokenFrom != null) {
+      setTokenFrom(newTokenFrom);
+    }
+
+    const newTokenTo = tokens.find((token) => token.id === tokenTo.id);
+    if (newTokenTo != null) {
+      setTokenTo(newTokenTo);
+    }
+  }, [tokens]);
+
   return (
     <div className="space-between">
       <div className="swap-form">
@@ -144,7 +132,7 @@ const SwapForm: React.FC<SwapProps> = ({
         <div className="swap-div swap-body form-border">
           <div className="space-between">
             <strong className="info">From</strong>
-            <strong className="balance">{tokenFromBalance}</strong>
+            <strong className="balance">{tokenFrom.balance}</strong>
           </div>
           <div className="center">
             <input
@@ -155,7 +143,7 @@ const SwapForm: React.FC<SwapProps> = ({
             />
             <select
               id="from"
-              value={tokenFrom}
+              value={tokenFrom.id}
               onChange={handleFromTokenChange}
               className="input-selector input-style"
             >
@@ -182,7 +170,7 @@ const SwapForm: React.FC<SwapProps> = ({
           </div>
           <div className="space-between">
             <strong className="info">To</strong>
-            <strong className="balance">{tokenToBalance}</strong>
+            <strong className="balance">{tokenTo.balance}</strong>
           </div>
           <div className="center">
             <input
@@ -193,7 +181,7 @@ const SwapForm: React.FC<SwapProps> = ({
             ></input>
             <select
               id="to"
-              value={tokenTo}
+              value={tokenTo.id}
               onChange={handleToTokenChange}
               className="input-selector input-style"
             >

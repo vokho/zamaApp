@@ -6,4 +6,13 @@ export default defineConfig({
   define: {
     global: "window",
   },
+  resolve: {
+    alias: {
+      "isomorphic-unfetch": "cross-fetch",
+      unfetch: "cross-fetch",
+    },
+  },
+  optimizeDeps: {
+    include: ["relayer-sdk", "cross-fetch"],
+  },
 });

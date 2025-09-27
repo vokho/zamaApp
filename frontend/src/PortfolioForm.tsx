@@ -22,7 +22,7 @@ const PortfolioForm: React.FC<PortfolioProps> = ({
         </div>
         <div className="balance-body form-border">
           {tokens.map((token) => (
-            <div className="space-between">
+            <div key={token.id} className="space-between">
               <strong>{token.symbol + ": " + token.balance}</strong>
               <div className="opacity">
                 {"$" + (Number(token.balance) * 0.02).toFixed(4)}
