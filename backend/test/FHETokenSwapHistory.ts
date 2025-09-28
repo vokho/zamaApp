@@ -72,13 +72,13 @@ describe("FHETokenSwapHistory", function () {
 
     const wallet = signers.alice.address;
 
-    const tokenFrom = signers.alice.address;
+    const tokenFrom = "0xf2ae56F330F2837E7f3B62188848123fD6972b12";
     const encryptedTokenFrom = await fhevm
       .createEncryptedInput(fheTokenSwapHistoryContractAddress, signers.alice.address)
       .addAddress(tokenFrom)
       .encrypt();
 
-    const tokenTo = signers.alice.address;
+    const tokenTo = "0x3923b8e9Aa15c2b74F9139c7fB50a6EeFAb653ba";
     const encryptedTokenTo = await fhevm
       .createEncryptedInput(fheTokenSwapHistoryContractAddress, signers.alice.address)
       .addAddress(tokenTo)

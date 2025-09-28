@@ -95,10 +95,9 @@ const defaultTokens: Token[] = [
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("portfolio");
 
-  const [provider, setProvider] = useState<ethers.BrowserProvider | null>(null);
-  const [signer, setSigner] = useState<ethers.JsonRpcSigner | null>(null);
-
+  const [signer, setSigner] = useState<ethers.JsonRpcSigner>();
   const [walletAddress, setWalletAddress] = useState("");
+
   const [tokens, setTokens] = useState<Token[]>(defaultTokens);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -228,7 +227,6 @@ const App: React.FC = () => {
       // Connect Wallet
       const provider = new ethers.BrowserProvider(window.ethereum);
       await provider.send("eth_requestAccounts", []);
-      setProvider(provider);
 
       const signer = await provider.getSigner();
       setSigner(signer);
@@ -245,6 +243,13 @@ const App: React.FC = () => {
         console.error("Wrong network! Switch to Sepolia " + network.chainId);
       }
 
+      //Get Instance
+      await initSDK({});
+
+      const config = { ...SepoliaConfig, network: window.ethereum };
+
+      const instance = await createInstance(config);
+
       // Get VOK balance
       const fheTokenVOKContract = new ethers.Contract(
         fheTokenVOKAddress,
@@ -252,20 +257,61 @@ const App: React.FC = () => {
         provider
       );
 
-      const balanceVOK = await fheTokenVOKContract.balanceOf(address);
-      const formattedVOK = ethers.formatUnits(balanceVOK, 18);
-      tokens[0].balance = formattedVOK;
+      let handle: Uint8Array;
+      const storedHandle = localStorage.getItem("walletHandle");
+      if (storedHandle) {
+        handle = new Uint8Array(JSON.parse(storedHandle));
+      } else {
+        const encryptedWalletAddress = await instance
+          .createEncryptedInput(fheTokenVOKAddress, address)
+          .addAddress(address)
+          .encrypt();
+
+        handle = encryptedWalletAddress.handles[0];
+        localStorage.setItem(
+          "walletHandle",
+          JSON.stringify(Array.from(handle))
+        );
+      }
+
+      const encryptedBalanceVOK = await fheTokenVOKContract.getEncryptedBalance(
+        handle
+      );
+
+      const decryptedBalanceVOK = await decryptValue(
+        encryptedBalanceVOK,
+        fheTokenVOKAddress,
+        signer
+      );
+
+      const formattedVOK = ethers.formatUnits(
+        decryptedBalanceVOK.toString(),
+        18
+      );
+      tokens[0].balance = formattedVOK.toString();
 
       // Get KHO balance
-      const tokenKHOContract = new ethers.Contract(
+      const fheTokenKHOContract = new ethers.Contract(
         fheTokenKHOAddress,
         fheTokenKHOABI,
         provider
       );
 
-      const balanceKHO = await tokenKHOContract.balanceOf(address);
-      const formattedKHO = ethers.formatUnits(balanceKHO, 18);
-      tokens[1].balance = formattedKHO;
+      const encryptedBalanceKHO = await fheTokenKHOContract.getEncryptedBalance(
+        handle
+      );
+
+      const decryptedBalanceKHO = await decryptValue(
+        encryptedBalanceKHO,
+        fheTokenKHOAddress,
+        signer
+      );
+
+      const formattedKHO = ethers.formatUnits(
+        decryptedBalanceKHO.toString(),
+        18
+      );
+      tokens[1].balance = formattedKHO.toString();
     } catch (error) {
       console.error("Error:", error);
     } finally {
@@ -284,15 +330,40 @@ const App: React.FC = () => {
 
     const parsedAmount = ethers.parseUnits(amountInTokens, 18);
 
-    const tx = await tokenContract.faucet(parsedAmount);
-    await tx.wait();
+    const faucetTransaction = await tokenContract.faucet(parsedAmount);
+    await faucetTransaction.wait();
 
-    const balance = await tokenContract.balanceOf(walletAddress);
+    const balance =
+      ethers.parseUnits(token.balance, 18) +
+      ethers.parseUnits(amountInTokens, 18);
     const formatted = ethers.formatUnits(balance, 18);
 
     const updatedTokens = tokens.map((item) =>
       item.id === token.id ? { ...item, balance: formatted } : item
     );
+
+    const instance = await createInstance({
+      ...SepoliaConfig,
+    });
+
+    const storedHandle = localStorage.getItem("walletHandle");
+    if (!storedHandle) {
+      return;
+    }
+    const handle = new Uint8Array(JSON.parse(storedHandle));
+
+    const encryptedWalletBalance = await instance
+      .createEncryptedInput(token.tokenAddress, walletAddress)
+      .add128(balance)
+      .encrypt();
+
+    const tx: ethers.TransactionResponse =
+      await tokenContract.setEncryptedBalance(
+        handle,
+        encryptedWalletBalance.handles[0],
+        encryptedWalletBalance.inputProof
+      );
+    await tx.wait();
 
     setTokens(updatedTokens);
   };
@@ -382,6 +453,60 @@ const App: React.FC = () => {
       );
 
     setTokens(updatedTokens);
+  };
+
+  const decryptValue = async (
+    encryptedValue: string,
+    contractAddress: string,
+    signer: ethers.JsonRpcSigner
+  ) => {
+    const instance = await createInstance({
+      ...SepoliaConfig,
+    });
+
+    const ciphertextHandle = encryptedValue;
+
+    const keypair = instance.generateKeypair();
+    const handleContractPairs = [
+      {
+        handle: ciphertextHandle,
+        contractAddress: contractAddress,
+      },
+    ];
+    const startTimeStamp = Math.floor(Date.now() / 1000).toString();
+    const durationDays = "10";
+    const contractAddresses = [contractAddress];
+
+    const eip712 = instance.createEIP712(
+      keypair.publicKey,
+      contractAddresses,
+      startTimeStamp,
+      durationDays
+    );
+
+    const signature = await signer.signTypedData(
+      eip712.domain,
+      {
+        UserDecryptRequestVerification:
+          eip712.types.UserDecryptRequestVerification,
+      },
+      eip712.message
+    );
+
+    const result = await instance.userDecrypt(
+      handleContractPairs,
+      keypair.privateKey,
+      keypair.publicKey,
+      signature.replace("0x", ""),
+      contractAddresses,
+      signer.address,
+      startTimeStamp,
+      durationDays
+    );
+
+    const decryptedValue = result[ciphertextHandle];
+
+    return decryptedValue;
   };
 
   return (
