@@ -4,6 +4,7 @@ import {
   initSDK,
   createInstance,
   SepoliaConfig,
+  type FhevmInstance,
 } from "@zama-fhe/relayer-sdk/bundle";
 
 import "./App.css";
@@ -17,6 +18,7 @@ import FHETokenKHOABI from "../../backend/artifacts/contracts/FHETokenKHO.sol/FH
 import FHETokenSwapHistoryABI from "../../backend/artifacts/contracts/FHETokenSwapHistory.sol/FHETokenSwapHistory.json";
 
 import TokenSwapABI from "../../backend/artifacts/contracts/TokenSwap.sol/TokenSwap.json";
+import type { Contract } from "ethers";
 
 const fheTokenVOKAddress = "0xf2ae56F330F2837E7f3B62188848123fD6972b12";
 const fheTokenVOKABI = FHETokenVOKABI.abi;
@@ -39,6 +41,15 @@ const tabs: Tab[] = [
   { id: "portfolio", label: "Portfolio" },
   { id: "swap", label: "Swap" },
 ];
+
+export interface SwapHistory {
+  id: string;
+  date: string;
+  from: string;
+  fromAmount: string;
+  to: string;
+  toAmount: string;
+}
 
 export interface Token {
   id: string;
@@ -191,7 +202,13 @@ const App: React.FC = () => {
       case "portfolio":
         return <PortfolioForm tokens={tokens} onHandleFaucet={handleFaucet} />;
       case "swap":
-        return <SwapForm tokens={tokens} onHandleSwap={handleSwap} />;
+        return (
+          <SwapForm
+            tokens={tokens}
+            onHandleSwap={handleSwap}
+            onAddSwapHistory={addSwapHistory}
+          />
+        );
       default:
         return null;
     }
@@ -254,7 +271,7 @@ const App: React.FC = () => {
       const fheTokenVOKContract = new ethers.Contract(
         fheTokenVOKAddress,
         fheTokenVOKABI,
-        provider
+        signer
       );
 
       let handle: Uint8Array;
@@ -274,38 +291,95 @@ const App: React.FC = () => {
         );
       }
 
-      const encryptedBalanceVOK = await fheTokenVOKContract.getEncryptedBalance(
+      let encryptedBalanceVOK = await fheTokenVOKContract.getEncryptedBalance(
         handle
       );
 
-      const decryptedBalanceVOK = await decryptValue(
+      let decryptedBalanceVOK = await decryptValue(
         encryptedBalanceVOK,
         fheTokenVOKAddress,
         signer
       );
 
+      const balanceOfVOK = await fheTokenVOKContract.balanceOf(address);
+
+      if (decryptedBalanceVOK !== balanceOfVOK) {
+        const encryptedWalletBalance = await instance
+          .createEncryptedInput(fheTokenVOKAddress, address)
+          .add128(balanceOfVOK)
+          .encrypt();
+
+        const tx: ethers.TransactionResponse =
+          await fheTokenVOKContract.setEncryptedBalance(
+            handle,
+            encryptedWalletBalance.handles[0],
+            encryptedWalletBalance.inputProof
+          );
+
+        await tx.wait();
+
+        encryptedBalanceVOK = await fheTokenVOKContract.getEncryptedBalance(
+          handle
+        );
+
+        decryptedBalanceVOK = await decryptValue(
+          encryptedBalanceVOK,
+          fheTokenVOKAddress,
+          signer
+        );
+      }
+
       const formattedVOK = ethers.formatUnits(
         decryptedBalanceVOK.toString(),
         18
       );
+
       tokens[0].balance = formattedVOK.toString();
 
       // Get KHO balance
       const fheTokenKHOContract = new ethers.Contract(
         fheTokenKHOAddress,
         fheTokenKHOABI,
-        provider
+        signer
       );
 
-      const encryptedBalanceKHO = await fheTokenKHOContract.getEncryptedBalance(
+      let encryptedBalanceKHO = await fheTokenKHOContract.getEncryptedBalance(
         handle
       );
 
-      const decryptedBalanceKHO = await decryptValue(
+      let decryptedBalanceKHO = await decryptValue(
         encryptedBalanceKHO,
         fheTokenKHOAddress,
         signer
       );
+
+      const balanceOfKHO = await fheTokenKHOContract.balanceOf(address);
+
+      if (decryptedBalanceKHO !== balanceOfKHO) {
+        const encryptedWalletBalance = await instance
+          .createEncryptedInput(fheTokenKHOAddress, address)
+          .add128(balanceOfKHO)
+          .encrypt();
+
+        const tx: ethers.TransactionResponse =
+          await fheTokenKHOContract.setEncryptedBalance(
+            handle,
+            encryptedWalletBalance.handles[0],
+            encryptedWalletBalance.inputProof
+          );
+
+        await tx.wait();
+
+        encryptedBalanceKHO = await fheTokenKHOContract.getEncryptedBalance(
+          handle
+        );
+
+        decryptedBalanceKHO = await decryptValue(
+          encryptedBalanceKHO,
+          fheTokenKHOAddress,
+          signer
+        );
+      }
 
       const formattedKHO = ethers.formatUnits(
         decryptedBalanceKHO.toString(),
@@ -438,10 +512,54 @@ const App: React.FC = () => {
 
     await tx.wait();
 
-    const balanceFrom = await fheTokenFromContract.balanceOf(walletAddress);
-    const formattedFrom = ethers.formatUnits(balanceFrom, 18);
+    const formattedFromAmount = ethers.parseUnits(
+      tokenFromAmount.toString(),
+      18
+    );
+    const formattedToAmount = ethers.parseUnits(tokenToAmount.toString(), 18);
 
-    const balanceTo = await fheTokenToContract.balanceOf(walletAddress);
+    const instance = await createInstance({
+      ...SepoliaConfig,
+    });
+
+    const storedHandle = localStorage.getItem("walletHandle");
+    if (!storedHandle) {
+      return;
+    }
+    const handle = new Uint8Array(JSON.parse(storedHandle));
+
+    const encryptedTokenFromBalance = await instance
+      .createEncryptedInput(tokenFrom.tokenAddress, walletAddress)
+      .add128(formattedFromAmount)
+      .encrypt();
+
+    const encryptedTokenToBalance = await instance
+      .createEncryptedInput(tokenTo.tokenAddress, walletAddress)
+      .add128(formattedToAmount)
+      .encrypt();
+
+    const decreaseTx: ethers.TransactionResponse =
+      await fheTokenFromContract.decreaseEncryptedBalance(
+        handle,
+        encryptedTokenFromBalance.handles[0],
+        encryptedTokenFromBalance.inputProof
+      );
+    await decreaseTx.wait();
+
+    const increaseTx: ethers.TransactionResponse =
+      await fheTokenToContract.increaseEncryptedBalance(
+        handle,
+        encryptedTokenToBalance.handles[0],
+        encryptedTokenToBalance.inputProof
+      );
+    await increaseTx.wait();
+
+    const balanceFrom =
+      ethers.parseUnits(tokenFrom.balance, 18) - formattedFromAmount;
+    const balanceTo =
+      ethers.parseUnits(tokenTo.balance, 18) + formattedToAmount;
+
+    const formattedFrom = ethers.formatUnits(balanceFrom, 18);
     const formattedTo = ethers.formatUnits(balanceTo, 18);
 
     const updatedTokens = tokens
@@ -453,6 +571,16 @@ const App: React.FC = () => {
       );
 
     setTokens(updatedTokens);
+  };
+
+  const addSwapHistory = async (swapHistory: SwapHistory) => {
+    const fheTokenSwapHistoryContract = new ethers.Contract(
+      fheTokenSwapHistoryAddress,
+      fheTokenSwapHistoryABI,
+      signer
+    );
+
+    
   };
 
   const decryptValue = async (

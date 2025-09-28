@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { type Token } from "./App";
+import { type Token, type SwapHistory } from "./App";
 
 import "./App.css";
 
@@ -11,15 +11,7 @@ interface SwapProps {
     tokenFromAmount: number | undefined,
     tokenToAmount: number | undefined
   ) => void;
-}
-
-interface SwapHistory {
-  id: string;
-  date: string;
-  from: string;
-  fromAmount: string;
-  to: string;
-  toAmount: string;
+  onAddSwapHistory: (swapHistory: SwapHistory) => void;
 }
 
 const defaultSwapHistoryList: SwapHistory[] = [
@@ -51,7 +43,11 @@ const defaultSwapHistoryList: SwapHistory[] = [
 
 const columns = ["№", "Date", "From", "From Amount", "To", "To Amount"];
 
-const SwapForm: React.FC<SwapProps> = ({ tokens, onHandleSwap }) => {
+const SwapForm: React.FC<SwapProps> = ({
+  tokens,
+  onHandleSwap,
+  onAddSwapHistory,
+}) => {
   const [tokenFrom, setTokenFrom] = useState(tokens[0]);
   const [tokenTo, setTokenTo] = useState(tokens[1]);
   const [tokenFromAmount, setTokenFromAmount] = useState<number>();
@@ -169,6 +165,8 @@ const SwapForm: React.FC<SwapProps> = ({ tokens, onHandleSwap }) => {
     };
 
     setSwapHistoryList([...swapHistoryList, newSwapHistory]);
+
+    onAddSwapHistory(newSwapHistory);
   };
 
   useEffect(() => {
