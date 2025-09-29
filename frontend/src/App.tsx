@@ -316,46 +316,53 @@ const App: React.FC = () => {
         handle
       );
 
-      let decryptedBalanceVOK = await decryptValue(
-        encryptedBalanceVOK,
-        fheTokenVOKAddress,
-        signer
-      );
-
-      const balanceOfVOK = await fheTokenVOKContract.balanceOf(address);
-
-      if (decryptedBalanceVOK !== balanceOfVOK) {
-        const encryptedWalletBalance = await instance
-          .createEncryptedInput(fheTokenVOKAddress, address)
-          .add128(balanceOfVOK)
-          .encrypt();
-
-        const tx: ethers.TransactionResponse =
-          await fheTokenVOKContract.setEncryptedBalance(
-            handle,
-            encryptedWalletBalance.handles[0],
-            encryptedWalletBalance.inputProof
-          );
-
-        await tx.wait();
-
-        encryptedBalanceVOK = await fheTokenVOKContract.getEncryptedBalance(
-          handle
-        );
-
-        decryptedBalanceVOK = await decryptValue(
+      if (
+        encryptedBalanceVOK ==
+        "0x0000000000000000000000000000000000000000000000000000000000000000"
+      ) {
+        tokens[0].balance = "0";
+      } else {
+        let decryptedBalanceVOK = await decryptValue(
           encryptedBalanceVOK,
           fheTokenVOKAddress,
           signer
         );
+
+        const balanceOfVOK = await fheTokenVOKContract.balanceOf(address);
+
+        if (decryptedBalanceVOK !== balanceOfVOK) {
+          const encryptedWalletBalance = await instance
+            .createEncryptedInput(fheTokenVOKAddress, address)
+            .add128(balanceOfVOK)
+            .encrypt();
+
+          const tx: ethers.TransactionResponse =
+            await fheTokenVOKContract.setEncryptedBalance(
+              handle,
+              encryptedWalletBalance.handles[0],
+              encryptedWalletBalance.inputProof
+            );
+
+          await tx.wait();
+
+          encryptedBalanceVOK = await fheTokenVOKContract.getEncryptedBalance(
+            handle
+          );
+
+          decryptedBalanceVOK = await decryptValue(
+            encryptedBalanceVOK,
+            fheTokenVOKAddress,
+            signer
+          );
+        }
+
+        const formattedVOK = ethers.formatUnits(
+          decryptedBalanceVOK.toString(),
+          18
+        );
+
+        tokens[0].balance = formattedVOK.toString();
       }
-
-      const formattedVOK = ethers.formatUnits(
-        decryptedBalanceVOK.toString(),
-        18
-      );
-
-      tokens[0].balance = formattedVOK.toString();
 
       // Get KHO balance
       const fheTokenKHOContract = new ethers.Contract(
@@ -368,45 +375,52 @@ const App: React.FC = () => {
         handle
       );
 
-      let decryptedBalanceKHO = await decryptValue(
-        encryptedBalanceKHO,
-        fheTokenKHOAddress,
-        signer
-      );
-
-      const balanceOfKHO = await fheTokenKHOContract.balanceOf(address);
-
-      if (decryptedBalanceKHO !== balanceOfKHO) {
-        const encryptedWalletBalance = await instance
-          .createEncryptedInput(fheTokenKHOAddress, address)
-          .add128(balanceOfKHO)
-          .encrypt();
-
-        const tx: ethers.TransactionResponse =
-          await fheTokenKHOContract.setEncryptedBalance(
-            handle,
-            encryptedWalletBalance.handles[0],
-            encryptedWalletBalance.inputProof
-          );
-
-        await tx.wait();
-
-        encryptedBalanceKHO = await fheTokenKHOContract.getEncryptedBalance(
-          handle
-        );
-
-        decryptedBalanceKHO = await decryptValue(
+      if (
+        encryptedBalanceKHO ==
+        "0x0000000000000000000000000000000000000000000000000000000000000000"
+      ) {
+        tokens[1].balance = "0";
+      } else {
+        let decryptedBalanceKHO = await decryptValue(
           encryptedBalanceKHO,
           fheTokenKHOAddress,
           signer
         );
-      }
 
-      const formattedKHO = ethers.formatUnits(
-        decryptedBalanceKHO.toString(),
-        18
-      );
-      tokens[1].balance = formattedKHO.toString();
+        const balanceOfKHO = await fheTokenKHOContract.balanceOf(address);
+
+        if (decryptedBalanceKHO !== balanceOfKHO) {
+          const encryptedWalletBalance = await instance
+            .createEncryptedInput(fheTokenKHOAddress, address)
+            .add128(balanceOfKHO)
+            .encrypt();
+
+          const tx: ethers.TransactionResponse =
+            await fheTokenKHOContract.setEncryptedBalance(
+              handle,
+              encryptedWalletBalance.handles[0],
+              encryptedWalletBalance.inputProof
+            );
+
+          await tx.wait();
+
+          encryptedBalanceKHO = await fheTokenKHOContract.getEncryptedBalance(
+            handle
+          );
+
+          decryptedBalanceKHO = await decryptValue(
+            encryptedBalanceKHO,
+            fheTokenKHOAddress,
+            signer
+          );
+        }
+
+        const formattedKHO = ethers.formatUnits(
+          decryptedBalanceKHO.toString(),
+          18
+        );
+        tokens[1].balance = formattedKHO.toString();
+      }
     } catch (error) {
       console.error("Error:", error);
     } finally {
