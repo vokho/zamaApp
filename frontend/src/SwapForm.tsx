@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { type Token, type SwapHistory } from "./App";
+import { type Token, type FHESwapHistory } from "./App";
 
 import "./App.css";
 
@@ -11,7 +11,17 @@ interface SwapProps {
     tokenFromAmount: number | undefined,
     tokenToAmount: number | undefined
   ) => void;
-  onAddSwapHistory: (swapHistory: SwapHistory) => void;
+  onGetSwapHistoryList: () => SwapHistory[];
+  onAddSwapHistory: (fheSwapHistory: FHESwapHistory) => void;
+}
+
+export interface SwapHistory {
+  id: string;
+  date: string;
+  from: string;
+  fromAmount: string;
+  to: string;
+  toAmount: string;
 }
 
 const defaultSwapHistoryList: SwapHistory[] = [
@@ -46,6 +56,7 @@ const columns = ["№", "Date", "From", "From Amount", "To", "To Amount"];
 const SwapForm: React.FC<SwapProps> = ({
   tokens,
   onHandleSwap,
+  onGetSwapHistoryList,
   onAddSwapHistory,
 }) => {
   const [tokenFrom, setTokenFrom] = useState(tokens[0]);
@@ -53,9 +64,7 @@ const SwapForm: React.FC<SwapProps> = ({
   const [tokenFromAmount, setTokenFromAmount] = useState<number>();
   const [tokenToAmount, setTokenToAmount] = useState<number>();
 
-  const [swapHistoryList, setSwapHistoryList] = useState<SwapHistory[]>(
-    defaultSwapHistoryList
-  );
+  const [swapHistoryList, setSwapHistoryList] = useState<SwapHistory[]>([]);
 
   const [canSwap, setCanSwap] = useState(false);
 
@@ -155,7 +164,7 @@ const SwapForm: React.FC<SwapProps> = ({
       ":" +
       dateTime.getMilliseconds();
 
-    const newSwapHistory: SwapHistory = {
+    const swapHistory: SwapHistory = {
       id: (swapHistoryList.length + 1).toString(),
       date: formatter,
       from: tokenFrom.symbol,
@@ -164,9 +173,18 @@ const SwapForm: React.FC<SwapProps> = ({
       toAmount: tokenToAmount?.toString(),
     };
 
-    setSwapHistoryList([...swapHistoryList, newSwapHistory]);
+    setSwapHistoryList([...swapHistoryList, swapHistory]);
 
-    onAddSwapHistory(newSwapHistory);
+    const fheSwapHistory: FHESwapHistory = {
+      id: (swapHistoryList.length + 1).toString(),
+      date: BigInt(dateTime.getTime()),
+      from: tokenFrom.tokenAddress,
+      fromAmount: tokenFromAmount.toString(),
+      to: tokenTo.tokenAddress,
+      toAmount: tokenToAmount?.toString(),
+    };
+
+    onAddSwapHistory(fheSwapHistory);
   };
 
   useEffect(() => {
@@ -202,6 +220,14 @@ const SwapForm: React.FC<SwapProps> = ({
 
     updateTokens();
   }, [tokenFrom.id, tokenTo.id, tokens]);
+
+  useEffect(() => {
+    const getSwapHistoryList = async () => {
+      setSwapHistoryList(await onGetSwapHistoryList());
+    };
+
+    getSwapHistoryList();
+  }, []);
 
   return (
     <div className="space-between">

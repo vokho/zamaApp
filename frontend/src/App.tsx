@@ -4,12 +4,11 @@ import {
   initSDK,
   createInstance,
   SepoliaConfig,
-  type FhevmInstance,
 } from "@zama-fhe/relayer-sdk/bundle";
 
 import "./App.css";
 import PortfolioForm from "./PortfolioForm.tsx";
-import SwapForm from "./SwapForm.tsx";
+import SwapForm, { type SwapHistory } from "./SwapForm.tsx";
 import { FaXTwitter, FaInstagram, FaYoutube, FaDiscord } from "react-icons/fa6";
 
 import FHETokenVOKABI from "../../backend/artifacts/contracts/FHETokenVOK.sol/FHETokenVOK.json";
@@ -18,7 +17,6 @@ import FHETokenKHOABI from "../../backend/artifacts/contracts/FHETokenKHO.sol/FH
 import FHETokenSwapHistoryABI from "../../backend/artifacts/contracts/FHETokenSwapHistory.sol/FHETokenSwapHistory.json";
 
 import TokenSwapABI from "../../backend/artifacts/contracts/TokenSwap.sol/TokenSwap.json";
-import type { Contract } from "ethers";
 
 const fheTokenVOKAddress = "0xf2ae56F330F2837E7f3B62188848123fD6972b12";
 const fheTokenVOKABI = FHETokenVOKABI.abi;
@@ -26,7 +24,7 @@ const fheTokenVOKABI = FHETokenVOKABI.abi;
 const fheTokenKHOAddress = "0x3923b8e9Aa15c2b74F9139c7fB50a6EeFAb653ba";
 const fheTokenKHOABI = FHETokenKHOABI.abi;
 
-const fheTokenSwapHistoryAddress = "0xC5629555a00588a65d3d0753558A1b964c72fE8c";
+const fheTokenSwapHistoryAddress = "0x0514F65a1Ad16189eb25d8B718C11F667c1F2051";
 const fheTokenSwapHistoryABI = FHETokenSwapHistoryABI.abi;
 
 const tokenSwapAddress = "0xD996B7565990eD0C928341F860E007bf4b8A8878";
@@ -42,9 +40,31 @@ const tabs: Tab[] = [
   { id: "swap", label: "Swap" },
 ];
 
-export interface SwapHistory {
+type ExternalInputEaddress = {
+  value: Uint8Array<ArrayBufferLike>;
+  proof: Uint8Array<ArrayBufferLike>;
+};
+
+type ExternalInputEuint128 = {
+  value: Uint8Array<ArrayBufferLike>;
+  proof: Uint8Array<ArrayBufferLike>;
+};
+
+type ExternalTokenData = {
+  externalToken: ExternalInputEaddress;
+  externalAmount: ExternalInputEuint128;
+};
+
+type ExternalSwapData = {
+  time: ExternalInputEuint128;
+  wallet: string;
+  tokenFromData: ExternalTokenData;
+  tokenToData: ExternalTokenData;
+};
+
+export interface FHESwapHistory {
   id: string;
-  date: string;
+  date: bigint;
   from: string;
   fromAmount: string;
   to: string;
@@ -106,6 +126,7 @@ const defaultTokens: Token[] = [
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("portfolio");
 
+  const [provider, setProvider] = useState<ethers.BrowserProvider>();
   const [signer, setSigner] = useState<ethers.JsonRpcSigner>();
   const [walletAddress, setWalletAddress] = useState("");
 
@@ -206,6 +227,7 @@ const App: React.FC = () => {
           <SwapForm
             tokens={tokens}
             onHandleSwap={handleSwap}
+            onGetSwapHistoryList={getSwapHistoryList}
             onAddSwapHistory={addSwapHistory}
           />
         );
@@ -244,6 +266,7 @@ const App: React.FC = () => {
       // Connect Wallet
       const provider = new ethers.BrowserProvider(window.ethereum);
       await provider.send("eth_requestAccounts", []);
+      setProvider(provider);
 
       const signer = await provider.getSigner();
       setSigner(signer);
@@ -573,14 +596,195 @@ const App: React.FC = () => {
     setTokens(updatedTokens);
   };
 
-  const addSwapHistory = async (swapHistory: SwapHistory) => {
+  const getSwapHistoryList = async () => {
+    if (signer == null) {
+      return;
+    }
+
     const fheTokenSwapHistoryContract = new ethers.Contract(
       fheTokenSwapHistoryAddress,
       fheTokenSwapHistoryABI,
       signer
     );
 
-    
+    const swapDataList = await fheTokenSwapHistoryContract.getSwapDataArray(
+      walletAddress
+    );
+
+    const swapHistoryList: SwapHistory[] = [];
+
+    for (const swapData of swapDataList) {
+      const swapHistory: SwapHistory = {
+        id: "",
+        date: "",
+        from: "",
+        fromAmount: "",
+        to: "",
+        toAmount: "",
+      };
+      swapHistory.id = swapData.order;
+      const date = await decryptValue(
+        swapData.time,
+        fheTokenSwapHistoryAddress,
+        signer
+      );
+
+      const dateTime = new Date(Number(date));
+
+      const formatter =
+        dateTime.getDate() +
+        "." +
+        (dateTime.getMonth() + 1 < 10
+          ? "0" + (dateTime.getMonth() + 1)
+          : dateTime.getMonth() + 1) +
+        "." +
+        dateTime.getFullYear() +
+        " " +
+        (dateTime.getHours() < 10
+          ? "0" + dateTime.getHours()
+          : dateTime.getHours()) +
+        ":" +
+        (dateTime.getMinutes() < 10
+          ? "0" + dateTime.getMinutes()
+          : dateTime.getMinutes()) +
+        ":" +
+        (dateTime.getSeconds() < 10
+          ? "0" + dateTime.getSeconds()
+          : dateTime.getSeconds()) +
+        ":" +
+        dateTime.getMilliseconds();
+
+      swapHistory.date = formatter;
+
+      const tokenFromAddress = await decryptValue(
+        swapData.tokenFromData.token,
+        fheTokenSwapHistoryAddress,
+        signer
+      );
+
+      const tokenFrom: Token | undefined = tokens.find(
+        (token) => token.tokenAddress === tokenFromAddress
+      );
+
+      swapHistory.from = tokenFrom?.symbol || "";
+
+      const tokenFromAmount = await decryptValue(
+        swapData.tokenFromData.amount,
+        fheTokenSwapHistoryAddress,
+        signer
+      );
+
+      swapHistory.fromAmount = ethers.formatUnits(
+        tokenFromAmount.toString(),
+        18
+      );
+
+      const tokenToAddress = await decryptValue(
+        swapData.tokenToData.token,
+        fheTokenSwapHistoryAddress,
+        signer
+      );
+
+      const tokenTo: Token | undefined = tokens.find(
+        (token) => token.tokenAddress === tokenToAddress
+      );
+
+      swapHistory.to = tokenTo?.symbol || "";
+
+      const tokenToAmount = await decryptValue(
+        swapData.tokenToData.amount,
+        fheTokenSwapHistoryAddress,
+        signer
+      );
+
+      swapHistory.toAmount = ethers.formatUnits(tokenToAmount.toString(), 18);
+
+      swapHistoryList.push(swapHistory);
+    }
+
+    return swapHistoryList;
+  };
+
+  const addSwapHistory = async (fheSwapHistory: FHESwapHistory) => {
+    const instance = await createInstance({
+      ...SepoliaConfig,
+    });
+
+    const fheTokenSwapHistoryContract = new ethers.Contract(
+      fheTokenSwapHistoryAddress,
+      fheTokenSwapHistoryABI,
+      signer
+    );
+
+    const encryptedTime = await instance
+      .createEncryptedInput(fheTokenSwapHistoryAddress, walletAddress)
+      .add128(fheSwapHistory.date)
+      .encrypt();
+
+    const encryptedTokenFrom = await instance
+      .createEncryptedInput(fheTokenSwapHistoryAddress, walletAddress)
+      .addAddress(fheSwapHistory.from)
+      .encrypt();
+
+    const encryptedTokenTo = await instance
+      .createEncryptedInput(fheTokenSwapHistoryAddress, walletAddress)
+      .addAddress(fheSwapHistory.to)
+      .encrypt();
+
+    const encryptedAmountFrom = await instance
+      .createEncryptedInput(fheTokenSwapHistoryAddress, walletAddress)
+      .add128(ethers.parseUnits(fheSwapHistory.fromAmount, 18))
+      .encrypt();
+
+    const encryptedAmountTo = await instance
+      .createEncryptedInput(fheTokenSwapHistoryAddress, walletAddress)
+      .add128(ethers.parseUnits(fheSwapHistory.toAmount, 18))
+      .encrypt();
+
+    const externalTime: ExternalInputEuint128 = {
+      value: encryptedTime.handles[0],
+      proof: encryptedTime.inputProof,
+    };
+
+    const externalTokenFrom: ExternalInputEaddress = {
+      value: encryptedTokenFrom.handles[0],
+      proof: encryptedTokenFrom.inputProof,
+    };
+
+    const externalAmountFrom: ExternalInputEuint128 = {
+      value: encryptedAmountFrom.handles[0],
+      proof: encryptedAmountFrom.inputProof,
+    };
+
+    const externalTokenFromData: ExternalTokenData = {
+      externalToken: externalTokenFrom,
+      externalAmount: externalAmountFrom,
+    };
+
+    const externalTokenTo: ExternalInputEaddress = {
+      value: encryptedTokenTo.handles[0],
+      proof: encryptedTokenTo.inputProof,
+    };
+
+    const externalAmountTo: ExternalInputEuint128 = {
+      value: encryptedAmountTo.handles[0],
+      proof: encryptedAmountTo.inputProof,
+    };
+
+    const externalTokenToData: ExternalTokenData = {
+      externalToken: externalTokenTo,
+      externalAmount: externalAmountTo,
+    };
+
+    const externalSwapData: ExternalSwapData = {
+      time: externalTime,
+      wallet: walletAddress,
+      tokenFromData: externalTokenFromData,
+      tokenToData: externalTokenToData,
+    };
+
+    const tx = await fheTokenSwapHistoryContract.addSwapData(externalSwapData);
+    await tx.wait();
   };
 
   const decryptValue = async (

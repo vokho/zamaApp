@@ -49,7 +49,7 @@ contract FHETokenSwapHistory is SepoliaConfig {
     SwapData[] _swapDataArray;
 
     function getSwapDataArray(address wallet) external view returns (SwapData[] memory swapDataArray) {
-        uint128 count = 0;
+        uint count = 0;
         for (uint i = 0; i < _swapDataArray.length; i++) {
             if (_swapDataArray[i].wallet == (wallet)) {
                 count++;
@@ -57,9 +57,11 @@ contract FHETokenSwapHistory is SepoliaConfig {
         }
 
         SwapData[] memory walletSwapDataArray = new SwapData[](count);
+        uint j = 0;
         for (uint i = 0; i < _swapDataArray.length; i++) {
             if (_swapDataArray[i].wallet == (wallet)) {
-                walletSwapDataArray[i] = _swapDataArray[i];
+                walletSwapDataArray[j] = _swapDataArray[i];
+                j++;
             }
         }
         return walletSwapDataArray;
