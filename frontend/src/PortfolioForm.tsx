@@ -41,7 +41,10 @@ const PortfolioForm: React.FC<PortfolioProps> = ({
               <button
                 key={token.id}
                 type="button"
-                className="faucet"
+                className={"faucet"}
+                disabled={
+                  token.id === "vok" || token.id === "kho" ? false : true
+                }
                 onClick={() => handleFaucet(token)}
               >
                 {"Get " + token.symbol + " token"}

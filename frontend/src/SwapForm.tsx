@@ -226,11 +226,13 @@ const SwapForm: React.FC<SwapProps> = ({
               onChange={handleFromTokenChange}
               className="input-selector input-style"
             >
-              {tokens.map((token) => (
-                <option key={token.id} value={token.id}>
-                  {token.symbol}
-                </option>
-              ))}
+              {tokens
+                .filter((token) => token.id === "vok" || token.id === "kho")
+                .map((token) => (
+                  <option key={token.id} value={token.id}>
+                    {token.symbol}
+                  </option>
+                ))}
             </select>
           </div>
           <div className="center">
@@ -264,11 +266,13 @@ const SwapForm: React.FC<SwapProps> = ({
               onChange={handleToTokenChange}
               className="input-selector input-style"
             >
-              {tokens.map((token) => (
-                <option key={token.id} value={token.id}>
-                  {token.symbol}
-                </option>
-              ))}
+              {tokens
+                .filter((token) => token.id === "vok" || token.id === "kho")
+                .map((token) => (
+                  <option key={token.id} value={token.id}>
+                    {token.symbol}
+                  </option>
+                ))}
             </select>
           </div>
           <div className="center">
