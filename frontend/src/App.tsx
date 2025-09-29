@@ -625,6 +625,10 @@ const App: React.FC = () => {
 
     const swapHistoryList: SwapHistory[] = [];
 
+    if (swapDataList.length < 1) {
+      return swapHistoryList;
+    }
+
     for (const swapData of swapDataList) {
       const swapHistory: SwapHistory = {
         id: "",
