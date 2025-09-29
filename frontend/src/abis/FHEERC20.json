@@ -1,0 +1,99 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "FHEERC20",
+  "sourceName": "contracts/FHEERC20.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "eaddress",
+          "name": "encryptedWallet",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "externalEuint128",
+          "name": "externalEncryptedValue",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes",
+          "name": "inputProof",
+          "type": "bytes"
+        }
+      ],
+      "name": "decreaseEncryptedBalance",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "eaddress",
+          "name": "encryptedWallet",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getEncryptedBalance",
+      "outputs": [
+        {
+          "internalType": "euint128",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "eaddress",
+          "name": "encryptedWallet",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "externalEuint128",
+          "name": "externalEncryptedValue",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes",
+          "name": "inputProof",
+          "type": "bytes"
+        }
+      ],
+      "name": "increaseEncryptedBalance",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "eaddress",
+          "name": "encryptedWallet",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "externalEuint128",
+          "name": "externalEncryptedBalance",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes",
+          "name": "inputProof",
+          "type": "bytes"
+        }
+      ],
+      "name": "setEncryptedBalance",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

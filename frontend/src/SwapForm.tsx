@@ -11,7 +11,7 @@ interface SwapProps {
     tokenFromAmount: number | undefined,
     tokenToAmount: number | undefined
   ) => void;
-  onGetSwapHistoryList: () => SwapHistory[];
+  onGetSwapHistoryList: () => Promise<SwapHistory[]>;
   onAddSwapHistory: (fheSwapHistory: FHESwapHistory) => void;
 }
 
@@ -23,33 +23,6 @@ export interface SwapHistory {
   to: string;
   toAmount: string;
 }
-
-const defaultSwapHistoryList: SwapHistory[] = [
-  {
-    id: "1",
-    date: "19.09.2025 15:32:08:458",
-    from: "VOK",
-    fromAmount: "2.5",
-    to: "KHO",
-    toAmount: "5",
-  },
-  {
-    id: "2",
-    date: "20.09.2025 19:10:39:036",
-    from: "JEN",
-    fromAmount: "0.25",
-    to: "HON",
-    toAmount: "0.05",
-  },
-  {
-    id: "3",
-    date: "20.09.2025 23:40:25:652",
-    from: "ALE",
-    fromAmount: "0.008",
-    to: "VOK",
-    toAmount: "0.24562",
-  },
-];
 
 const columns = ["№", "Date", "From", "From Amount", "To", "To Amount"];
 
@@ -68,7 +41,7 @@ const SwapForm: React.FC<SwapProps> = ({
 
   const [canSwap, setCanSwap] = useState(false);
 
-  const handleFromTokenChange = (event) => {
+  const handleFromTokenChange = (event: any) => {
     const newTokenFrom = tokens.find(
       (token) => token.id === event.target.value
     );
@@ -86,7 +59,7 @@ const SwapForm: React.FC<SwapProps> = ({
     }
   };
 
-  const handleToTokenChange = (event) => {
+  const handleToTokenChange = (event: any) => {
     const newTokenTo = tokens.find((token) => token.id === event.target.value);
     if (newTokenTo != null) {
       setTokenFrom(newTokenTo);
@@ -102,7 +75,7 @@ const SwapForm: React.FC<SwapProps> = ({
     }
   };
 
-  const handleTokenFromAmountChange = (event) => {
+  const handleTokenFromAmountChange = (event: any) => {
     setTokenFromAmount(event.target.value);
 
     const tokenFromRate = tokenFrom?.rate;
@@ -113,7 +86,7 @@ const SwapForm: React.FC<SwapProps> = ({
     }
   };
 
-  const handleTokenToAmountChange = (event) => {
+  const handleTokenToAmountChange = (event: any) => {
     setTokenToAmount(event.target.value);
 
     const tokenFromRate = tokenFrom?.rate;

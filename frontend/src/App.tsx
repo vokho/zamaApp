@@ -11,12 +11,12 @@ import PortfolioForm from "./PortfolioForm.tsx";
 import SwapForm, { type SwapHistory } from "./SwapForm.tsx";
 import { FaXTwitter, FaInstagram, FaYoutube, FaDiscord } from "react-icons/fa6";
 
-import FHETokenVOKABI from "../../backend/artifacts/contracts/FHETokenVOK.sol/FHETokenVOK.json";
-import FHETokenKHOABI from "../../backend/artifacts/contracts/FHETokenKHO.sol/FHETokenKHO.json";
+import FHETokenVOKABI from "../src/abis/FHETokenVOK.json";
+import FHETokenKHOABI from "../src/abis/FHETokenKHO.json";
 
-import FHETokenSwapHistoryABI from "../../backend/artifacts/contracts/FHETokenSwapHistory.sol/FHETokenSwapHistory.json";
+import FHETokenSwapHistoryABI from "../src/abis/FHETokenSwapHistory.json";
 
-import TokenSwapABI from "../../backend/artifacts/contracts/TokenSwap.sol/TokenSwap.json";
+import TokenSwapABI from "../src/abis/TokenSwap.json";
 
 const fheTokenVOKAddress = "0xf2ae56F330F2837E7f3B62188848123fD6972b12";
 const fheTokenVOKABI = FHETokenVOKABI.abi;
@@ -126,7 +126,6 @@ const defaultTokens: Token[] = [
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("portfolio");
 
-  const [provider, setProvider] = useState<ethers.BrowserProvider>();
   const [signer, setSigner] = useState<ethers.JsonRpcSigner>();
   const [walletAddress, setWalletAddress] = useState("");
 
@@ -266,7 +265,6 @@ const App: React.FC = () => {
       // Connect Wallet
       const provider = new ethers.BrowserProvider(window.ethereum);
       await provider.send("eth_requestAccounts", []);
-      setProvider(provider);
 
       const signer = await provider.getSigner();
       setSigner(signer);
@@ -596,9 +594,9 @@ const App: React.FC = () => {
     setTokens(updatedTokens);
   };
 
-  const getSwapHistoryList = async () => {
+  const getSwapHistoryList = async (): Promise<SwapHistory[]> => {
     if (signer == null) {
-      return;
+      throw new Error("Signer must not be null!");
     }
 
     const fheTokenSwapHistoryContract = new ethers.Contract(
